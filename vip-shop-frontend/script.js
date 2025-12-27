@@ -214,8 +214,106 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// ==================== CURSOR TRACKING & PARTICLES ====================
+
+class CursorTracker {
+    constructor() {
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.cursorElement = null;
+        this.particles = [];
+        
+        this.init();
+    }
+
+    init() {
+        // Create cursor element
+        this.cursorElement = document.createElement('div');
+        this.cursorElement.id = 'cursor';
+        document.body.appendChild(this.cursorElement);
+
+        // Track mouse movement
+        document.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        document.addEventListener('mouseleave', () => this.onMouseLeave());
+        document.addEventListener('mouseenter', () => this.onMouseEnter());
+    }
+
+    onMouseMove(e) {
+        this.mouseX = e.clientX;
+        this.mouseY = e.clientY;
+
+        // Update cursor position
+        if (this.cursorElement) {
+            this.cursorElement.style.left = this.mouseX + 'px';
+            this.cursorElement.style.top = this.mouseY + 'px';
+        }
+
+        // Create particles
+        if (Math.random() > 0.7) {
+            this.createParticle(this.mouseX, this.mouseY);
+        }
+
+        // Update product card glow effect
+        document.querySelectorAll('.product-card').forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const x = ((this.mouseX - rect.left) / rect.width) * 100;
+            const y = ((this.mouseY - rect.top) / rect.height) * 100;
+            card.style.setProperty('--mouse-x', x + '%');
+            card.style.setProperty('--mouse-y', y + '%');
+        });
+    }
+
+    onMouseLeave() {
+        if (this.cursorElement) {
+            this.cursorElement.style.opacity = '0';
+        }
+    }
+
+    onMouseEnter() {
+        if (this.cursorElement) {
+            this.cursorElement.style.opacity = '1';
+        }
+    }
+
+    createParticle(x, y) {
+        const particle = document.createElement('div');
+        particle.className = 'particle particle-dot';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        document.body.appendChild(particle);
+
+        let opacity = 1;
+        let scale = 1;
+        let vx = (Math.random() - 0.5) * 4;
+        let vy = (Math.random() - 0.5) * 4 - 1;
+
+        const animate = () => {
+            opacity -= 0.02;
+            scale += 0.02;
+            x += vx;
+            y += vy;
+
+            particle.style.opacity = opacity;
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.transform = `scale(${scale})`;
+
+            if (opacity > 0) {
+                requestAnimationFrame(animate);
+            } else {
+                particle.remove();
+            }
+        };
+
+        animate();
+    }
+}
+
 // ==================== INITIALIZATION ====================
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('VIP Shop loaded successfully');
+    
+    // Initialize cursor tracker
+    new CursorTracker();
 });
