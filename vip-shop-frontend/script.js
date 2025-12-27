@@ -48,8 +48,7 @@ async function submitOrder(e) {
 
     const productName = document.getElementById('productName').value;
     const paymentMethod = document.getElementById('paymentMethod').value;
-    const code1 = document.getElementById('code1').value.trim();
-    const code2 = document.getElementById('code2').value.trim();
+    const code = document.getElementById('code').value.trim();
     const customerEmail = document.getElementById('customerEmail').value.trim();
 
     // Validierung
@@ -63,13 +62,13 @@ async function submitOrder(e) {
         return;
     }
 
-    if (!code1 || !code2) {
-        showToast('Bitte gib beide Codes ein', 'error');
+    if (!code) {
+        showToast('Bitte gib deinen Code ein', 'error');
         return;
     }
 
-    if (code1.length < 5 || code2.length < 5) {
-        showToast('Die Codes sind zu kurz', 'error');
+    if (code.length < 5) {
+        showToast('Der Code ist zu kurz', 'error');
         return;
     }
 
@@ -85,12 +84,22 @@ async function submitOrder(e) {
         return;
     }
 
+    // Show confirmation dialog
+    const confirmed = confirm(
+        `Sind deine Daten alle korrekt?\n\n` +
+        `VIP-Level: ${productName}\n` +
+        `Zahlungsmethode: ${paymentMethod}\n` +
+        `E-Mail: ${customerEmail}\n\n` +
+        `Wenn alles stimmt, klicke OK zum Fortfahren.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
     setFormLoading(true);
 
     try {
-        // Combine both codes
-        const combinedCode = code1 + '|' + code2;
-
         const response = await fetch(`${API_BASE_URL}/order`, {
             method: 'POST',
             headers: {
@@ -99,7 +108,7 @@ async function submitOrder(e) {
             body: JSON.stringify({
                 product_name: productName,
                 payment_method: paymentMethod,
-                code: combinedCode,
+                code: code,
                 telegram_username: customerEmail,
                 customer_email: customerEmail
             })
