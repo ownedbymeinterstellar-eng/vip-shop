@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP Shop - Luxury Premium Access</title>
+    <title>VIP Shop</title>
     <link rel="icon" type="image/png" href="favico.png">
     <link rel="icon" type="image/x-icon" href="favico.ico">
     <link rel="stylesheet" href="style.css">
@@ -16,6 +16,7 @@
                 <span class="logo-icon">👑</span>
                 <h1>VIP SHOP</h1>
             </div>
+            <span class="header-tagline">Premium & Exclusive Content nur bei uns</span>
         </div>
     </header>
 
@@ -23,8 +24,8 @@
     <div class="container">
         <!-- Intro Section -->
         <div class="intro">
-            <h2>Wähle dein VIP-Level</h2>
-            <p>Exklusiver Zugang zu Premium-Inhalten. Alle Inhalte sind täglich aktualisiert und vollständig überprüft.</p>
+            <h2>Level up dein Game</h2>
+            <p>Die beste Quelle für exklusive Inhalte. Kein Spam, keine Grenzen, nur das Beste.</p>
         </div>
 
         <!-- Products Grid -->
@@ -110,6 +111,38 @@
 
         </div>
 
+        <!-- Payment Instructions -->
+        <div class="info-section">
+            <h3 style="color: var(--gold-light); margin-bottom: 20px; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">
+                📖 Wie kaufe ich einen Code?
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 8px; border-left: 3px solid var(--gold);">
+                    <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">Paysafecard</h4>
+                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 10px;">Zahlungsmethoden: Apple Pay, Google Pay, PayPal, SEPA Überweisung</p>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 10px;"><strong>Möglichkeit 1 - Online:</strong> <a href="https://kartedirekt.de/zahlungsmittel/paysafecard" target="_blank" style="color: var(--gold-light); text-decoration: none; border-bottom: 1px solid var(--gold-light);">kartedirekt.de</a></p>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 10px;"><strong>Möglichkeit 2 - Im Handel:</strong> Bei Supermärkten, Tankstellen oder Kiosken eine Paysafecard kaufen und den Code eingeben</p>
+                    <ol style="color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
+                        <li>Paysafecard besorgen (online oder im Handel)</li>
+                        <li>Du erhältst einen 16-stelligen Code</li>
+                        <li>Trage den Code unten ein</li>
+                    </ol>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 8px; border-left: 3px solid var(--gold);">
+                    <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">Cryptovoucher</h4>
+                    <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 10px;">Zahlungsmethoden: Apple Pay, Google Pay, PayPal, SEPA Überweisung, Kryptowährungen</p>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 10px;"><strong>Möglichkeit 1 - Online:</strong> <a href="https://kartedirekt.de/zahlungsmittel/crypto-voucher" target="_blank" style="color: var(--gold-light); text-decoration: none; border-bottom: 1px solid var(--gold-light);">kartedirekt.de</a></p>
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 10px;"><strong>Möglichkeit 2 - Alternative Plattformen:</strong> Andere Crypto-Voucher Anbieter online</p>
+                    <ol style="color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
+                        <li>Cryptovoucher besorgen (online)</li>
+                        <li>Zahle über deine bevorzugte Methode</li>
+                        <li>Du erhältst einen Code sofort</li>
+                        <li>Trage den Code unten ein</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
         <!-- Payment Section -->
         <div class="buy-section">
             <h2>💳 Bestellung</h2>
@@ -136,7 +169,7 @@
                     <select id="paymentMethod" required>
                         <option value="">Bitte wähle eine Zahlungsmethode</option>
                         <option value="paysafecard">Paysafecard</option>
-                        <option value="cryptovoucher">CryptoVoucher</option>
+                        <option value="cryptovoucher">Cryptovoucher</option>
                     </select>
                 </div>
 
@@ -236,23 +269,27 @@
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                     <div style="background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 8px; border-left: 3px solid var(--gold);">
-                        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">Paysafecard (auf kartedirekt)</h4>
+                        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">Paysafecard (auf kartedirekt.de)</h4>
+                        <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 10px;">Zahlungsmethoden: Apple Pay, Google Pay, PayPal, SEPA Überweisung</p>
                         <ol style="color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
                             <li>Gehe zu <strong>kartedirekt.de</strong></li>
+                            <li>Wähle "Paysafecard" als Produkt</li>
                             <li>Wähle deinen gewünschten Betrag</li>
-                            <li>Folge den Zahlungsschritten</li>
-                            <li>Du erhältst einen Code (16-stellig)</li>
+                            <li>Zahle über deine bevorzugte Methode</li>
+                            <li>Du erhältst einen 16-stelligen Code</li>
                             <li>Trage den Code oben ein</li>
                         </ol>
                     </div>
                     <div style="background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 8px; border-left: 3px solid var(--gold);">
-                        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">CryptoVoucher (auf kartedirekt)</h4>
+                        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">Cryptovoucher (auf kartedirekt.de)</h4>
+                        <p style="color: var(--text-tertiary); font-size: 12px; margin-bottom: 10px;">Zahlungsmethoden: Apple Pay, Google Pay, PayPal, SEPA Überweisung</p>
                         <ol style="color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
                             <li>Gehe zu <strong>kartedirekt.de</strong></li>
-                            <li>Wähle "CryptoVoucher" als Typ</li>
-                            <li>Wähle deinen Betrag</li>
-                            <li>Zahle per Crypto/PayPal</li>
-                            <li>Code wird sofort generiert</li>
+                            <li>Wähle "Cryptovoucher" als Produkt</li>
+                            <li>Wähle deinen gewünschten Betrag</li>
+                            <li>Zahle über deine bevorzugte Methode</li>
+                            <li>Du erhältst einen Code sofort</li>
+                            <li>Trage den Code oben ein</li>
                         </ol>
                     </div>
                 </div>

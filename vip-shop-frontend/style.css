@@ -108,6 +108,14 @@ h1 {
     filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
 }
 
+.header-tagline {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
 @keyframes glow-text {
     0%, 100% {
         filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
@@ -182,7 +190,6 @@ h1 {
 
 .product-card.gold {
     border-color: var(--gold);
-    transform: scale(1.05);
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
@@ -324,52 +331,16 @@ h1 {
 .glow-silver {
     text-shadow: 0 0 10px rgba(192, 192, 192, 0.5), 
                  0 0 20px rgba(192, 192, 192, 0.3);
-    animation: glow-silver 2s ease-in-out infinite;
-}
-
-@keyframes glow-silver {
-    0%, 100% {
-        text-shadow: 0 0 10px rgba(192, 192, 192, 0.5), 
-                     0 0 20px rgba(192, 192, 192, 0.3);
-    }
-    50% {
-        text-shadow: 0 0 20px rgba(192, 192, 192, 0.8), 
-                     0 0 30px rgba(192, 192, 192, 0.6);
-    }
 }
 
 .glow-gold {
     text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 
                  0 0 20px rgba(212, 175, 55, 0.4);
-    animation: glow-gold 2s ease-in-out infinite;
-}
-
-@keyframes glow-gold {
-    0%, 100% {
-        text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 
-                     0 0 20px rgba(212, 175, 55, 0.4);
-    }
-    50% {
-        text-shadow: 0 0 20px rgba(212, 175, 55, 1), 
-                     0 0 30px rgba(212, 175, 55, 0.7);
-    }
 }
 
 .glow-platinum {
     text-shadow: 0 0 10px rgba(229, 229, 229, 0.5), 
                  0 0 20px rgba(229, 229, 229, 0.3);
-    animation: glow-platinum 2s ease-in-out infinite;
-}
-
-@keyframes glow-platinum {
-    0%, 100% {
-        text-shadow: 0 0 10px rgba(229, 229, 229, 0.5), 
-                     0 0 20px rgba(229, 229, 229, 0.3);
-    }
-    50% {
-        text-shadow: 0 0 20px rgba(229, 229, 229, 0.8), 
-                     0 0 30px rgba(229, 229, 229, 0.6);
-    }
 }
 
 .product-price {
@@ -557,6 +528,15 @@ select {
     background-position: right 8px center;
     background-size: 20px;
     padding-right: 36px;
+}
+
+select option {
+    background: #1a1a1a;
+    color: var(--text-light);
+}
+
+select option:hover {
+    background: #2a2a2a;
 }
 
 input::placeholder {
