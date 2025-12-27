@@ -734,9 +734,13 @@
                 content = `
                     <p>Möchtest du diese Bestellung ablehnen?</p>
                     <p><strong>Produkt:</strong> ${order.product_name}</p>
-                    <p><strong>Telegram:</strong> ${order.telegram_username}</p>
+                    <p><strong>E-Mail:</strong> ${order.customer_email}</p>
+                    <p style="margin-top: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">Grund für Ablehnung:</label>
+                        <textarea id="rejectionReason" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; min-height: 80px;" placeholder="Z.B. Zahlungsmethode nicht akzeptiert, verdächtige Aktivität, etc."></textarea>
+                    </p>
                     <p style="margin-top: 20px; color: #ef4444; font-size: 14px;">
-                        ⚠️ Der Kunde wird benachrichtigt, dass seine Bestellung abgelehnt wurde.
+                        ⚠️ Der Kunde wird per E-Mail benachrichtigt und erhält den Grund.
                     </p>
                 `;
                 confirmText = 'Ablehnen';
@@ -767,6 +771,7 @@
 
             const { orderId, action } = pendingAction;
             let endpoint = '';
+            let body = null;
 
             if (action === 'approve') {
                 endpoint = `/admin/approve/${orderId}`;
@@ -774,13 +779,22 @@
                 endpoint = `/admin/finish/${orderId}`;
             } else if (action === 'reject') {
                 endpoint = `/admin/reject/${orderId}`;
+                const reason = document.getElementById('rejectionReason')?.value || '';
+                body = JSON.stringify({ reason });
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                const fetchOptions = {
                     method: 'POST',
                     headers: { 'x-admin-secret': adminSecret }
-                });
+                };
+
+                if (body) {
+                    fetchOptions.headers['Content-Type'] = 'application/json';
+                    fetchOptions.body = body;
+                }
+
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
                 if (!response.ok) {
                     throw new Error('Action failed');
