@@ -282,6 +282,58 @@ h1 {
     color: var(--platinum);
 }
 
+/* Glow Effects for Product Names */
+.glow-silver {
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.5), 
+                 0 0 20px rgba(192, 192, 192, 0.3);
+    animation: glow-silver 2s ease-in-out infinite;
+}
+
+@keyframes glow-silver {
+    0%, 100% {
+        text-shadow: 0 0 10px rgba(192, 192, 192, 0.5), 
+                     0 0 20px rgba(192, 192, 192, 0.3);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(192, 192, 192, 0.8), 
+                     0 0 30px rgba(192, 192, 192, 0.6);
+    }
+}
+
+.glow-gold {
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 
+                 0 0 20px rgba(212, 175, 55, 0.4);
+    animation: glow-gold 2s ease-in-out infinite;
+}
+
+@keyframes glow-gold {
+    0%, 100% {
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.6), 
+                     0 0 20px rgba(212, 175, 55, 0.4);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(212, 175, 55, 1), 
+                     0 0 30px rgba(212, 175, 55, 0.7);
+    }
+}
+
+.glow-platinum {
+    text-shadow: 0 0 10px rgba(229, 229, 229, 0.5), 
+                 0 0 20px rgba(229, 229, 229, 0.3);
+    animation: glow-platinum 2s ease-in-out infinite;
+}
+
+@keyframes glow-platinum {
+    0%, 100% {
+        text-shadow: 0 0 10px rgba(229, 229, 229, 0.5), 
+                     0 0 20px rgba(229, 229, 229, 0.3);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(229, 229, 229, 0.8), 
+                     0 0 30px rgba(229, 229, 229, 0.6);
+    }
+}
+
 .product-price {
     font-size: 32px;
     font-weight: bold;
