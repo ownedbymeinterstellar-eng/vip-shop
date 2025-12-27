@@ -81,9 +81,9 @@ export async function sendApprovalEmail(customerEmail, orderId, productName) {
   const subject = '✅ Deine Bestellung wurde genehmigt! - VIP Shop';
   
   const groupLinks = {
-    'VIP Direct': 'https://t.me/+EwQE5eaiAwg5OGRk',
-    'VIP Standard': 'https://t.me/+eyPpy6JPWKNiYjNk',
-    'VIP Plus': 'https://t.me/+ISTJI8IR6TtmY2Y0'
+    'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
+    'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
+    'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
   };
 
   const groupLink = groupLinks[productName];
@@ -165,9 +165,9 @@ export async function sendCompletionEmail(customerEmail, orderId, productName, c
   const subject = '🎁 Dein Code ist bereit! - VIP Shop';
   
   const groupLinks = {
-    'VIP Direct': 'https://t.me/+EwQE5eaiAwg5OGRk',
-    'VIP Standard': 'https://t.me/+eyPpy6JPWKNiYjNk',
-    'VIP Plus': 'https://t.me/+ISTJI8IR6TtmY2Y0'
+    'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
+    'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
+    'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
   };
 
   const groupLink = groupLinks[productName];
