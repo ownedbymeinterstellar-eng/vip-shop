@@ -1,42 +1,80 @@
 import nodemailer from 'nodemailer';
+import { createRequire } from 'module';
 
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
-const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
+// Lade dotenv direkt in diesem Modul
+const require = createRequire(import.meta.url);
+require('dotenv').config();
+
+// Dynamisches Laden der Konfiguration (wird bei jedem Aufruf neu geprüft)
+function getEmailConfig() {
+  const user = process.env.EMAIL_USER;
+  const password = process.env.EMAIL_PASSWORD;
+  const from = process.env.EMAIL_FROM || user;
+  
+  console.log('[DEBUG] getEmailConfig called:');
+  console.log('  EMAIL_USER from process.env:', user);
+  console.log('  EMAIL_PASSWORD exists:', !!password);
+  console.log('  EMAIL_FROM from process.env:', from);
+  
+  return { user, password, from };
+}
+
+// Log email configuration status at startup
+const initialConfig = getEmailConfig();
+if (!initialConfig.user || !initialConfig.password) {
+  console.warn('⚠️ Email Service: Missing credentials (EMAIL_USER or EMAIL_PASSWORD not set)');
+  console.warn(`   EMAIL_USER: ${initialConfig.user ? 'SET' : 'NOT SET'}`);
+  console.warn(`   EMAIL_PASSWORD: ${initialConfig.password ? 'SET' : 'NOT SET'}`);
+} else {
+  console.log('✓ Email Service: Configured and ready');
+  console.log(`   EMAIL_USER: ${initialConfig.user}`);
+  console.log(`   EMAIL_FROM: ${initialConfig.from}`);
+}
 
 // Konfiguriere Nodemailer
 // Für Gmail: https://myaccount.google.com/apppasswords
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: process.env.EMAIL_SECURE === 'true',
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASSWORD
-  }
-});
+function createTransporter() {
+  const config = getEmailConfig();
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT || '587'),
+    secure: process.env.EMAIL_SECURE === 'true',
+    auth: {
+      user: config.user,
+      pass: config.password
+    }
+  });
+}
 
 // ==================== SEND EMAIL ====================
 
 export async function sendEmail(to, subject, html) {
   try {
-    if (!EMAIL_USER || !EMAIL_PASSWORD) {
-      console.warn('⚠️ Email not configured - skipping email send');
+    const config = getEmailConfig();
+    
+    if (!config.user || !config.password) {
+      console.warn('⚠️ Email not configured - skipping email send to', to);
+      console.warn('   Make sure EMAIL_USER and EMAIL_PASSWORD are set in environment variables');
       return false;
     }
 
     const mailOptions = {
-      from: EMAIL_FROM,
+      from: config.from,
       to,
       subject,
       html
     };
 
+    console.log(`📧 Sending email to ${to} with subject: "${subject}"`);
+    const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✓ Email sent to ${to}:`, info.messageId);
+    console.log(`✓ Email successfully sent to ${to}:`, info.messageId);
     return true;
   } catch (error) {
-    console.error(`Error sending email to ${to}:`, error.message);
+    console.error(`❌ Error sending email to ${to}:`);
+    console.error(`   Subject: ${subject}`);
+    console.error(`   Error: ${error.message}`);
+    if (error.code) console.error(`   Code: ${error.code}`);
     return false;
   }
 }

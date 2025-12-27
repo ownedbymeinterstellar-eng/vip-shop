@@ -1,16 +1,19 @@
+// WICHTIG: dotenv MUSS mit require geladen werden, damit config() vor den ES6 Imports ausgeführt wird
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+require('dotenv').config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+
 import {
   sendInitialOrderEmail,
   sendApprovalEmail,
   sendRejectionEmail,
   sendCompletionEmail
 } from './email-service.js';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,10 +97,16 @@ const initializeDatabase = async () => {
 const authenticateAdmin = (req, res, next) => {
   const adminSecret = req.headers['x-admin-secret'];
   
+  console.log('[DEBUG Auth] Received secret:', adminSecret);
+  console.log('[DEBUG Auth] Expected secret:', ADMIN_SECRET);
+  console.log('[DEBUG Auth] Match:', adminSecret === ADMIN_SECRET);
+  
   if (!adminSecret || adminSecret !== ADMIN_SECRET) {
+    console.log('[DEBUG Auth] ❌ Authentication failed');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
+  console.log('[DEBUG Auth] ✓ Authentication successful');
   next();
 };
 
@@ -417,6 +426,45 @@ app.post('/admin/reject/:id', authenticateAdmin, async (req, res) => {
 // Health Check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ==================== TEST ROUTES (Development Only) ====================
+
+// Test email sending (Admin only)
+app.post('/admin/test-email', authenticateAdmin, async (req, res) => {
+  try {
+    const { email, type } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email address required' });
+    }
+
+    console.log(`\n🧪 Testing email send to: ${email}`);
+
+    let success = false;
+
+    if (type === 'initial') {
+      success = await sendInitialOrderEmail(email, 'TEST-ORDER-ID-123', 'Gold');
+    } else if (type === 'approval') {
+      success = await sendApprovalEmail(email, 'TEST-ORDER-ID-123', 'Gold');
+    } else if (type === 'completion') {
+      success = await sendCompletionEmail(email, 'TEST-ORDER-ID-123', 'Gold', 'TEST-CODE-12345');
+    } else if (type === 'rejection') {
+      success = await sendRejectionEmail(email, 'TEST-ORDER-ID-123', 'Gold', 'Test rejection reason');
+    } else {
+      return res.status(400).json({ error: 'Invalid email type. Use: initial, approval, completion, rejection' });
+    }
+
+    res.json({
+      success,
+      message: success ? 'Email sent successfully (check logs)' : 'Failed to send email (check logs)',
+      email,
+      type
+    });
+  } catch (error) {
+    console.error('Test email error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // 404 Handler
