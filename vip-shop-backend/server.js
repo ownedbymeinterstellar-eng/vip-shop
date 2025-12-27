@@ -3,18 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  sendInitialOrderMessage,
-  sendApprovalMessage,
-  sendRejectionMessage,
-  sendCompletionMessage,
-  validateBotToken
-} from './telegram-bot.js';
-import {
-  initializeTelegramDatabase,
-  processTelegramUpdate,
-  getChatIdByTelegramId
-} from './telegram-service.js';
 
 dotenv.config();
 
@@ -86,9 +74,6 @@ const initializeDatabase = async () => {
         `
       }).catch(() => ({ error: null })); // RPC might not exist, that's ok
     }
-
-    // Telegram users table
-    await initializeTelegramDatabase();
 
     console.log('✓ Supabase Datenbank initialisiert');
   } catch (error) {
@@ -386,27 +371,6 @@ app.post('/admin/reject/:id', authenticateAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ==================== TELEGRAM WEBHOOK ====================
-
-// Test endpoint
-app.get('/telegram/webhook', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    message: 'Telegram webhook endpoint is active'
-  });
-});
-
-app.post('/telegram/webhook', async (req, res) => {
-  try {
-    console.log('📨 Telegram webhook received');
-    processTelegramUpdate(req.body);
-    res.status(200).json({ ok: true });
-  } catch (error) {
-    console.error('Error processing Telegram webhook:', error);
-    res.status(200).json({ ok: true });
   }
 });
 
