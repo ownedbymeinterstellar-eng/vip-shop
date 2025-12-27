@@ -146,7 +146,7 @@ function showSuccessMessage(orderId, customerEmail) {
         <div class="success-message">
             <span class="emoji">✨</span>
             <div style="font-size: 20px; margin-bottom: 15px; color: var(--gold-light);">
-                <strong>Bestellung erfolgreich!</strong>
+                <strong>Bestellung wurde freigegeben!</strong>
             </div>
             
             <div class="order-details">
@@ -157,16 +157,16 @@ function showSuccessMessage(orderId, customerEmail) {
                 <p style="color: var(--text-secondary);">${customerEmail}</p>
                 
                 <p style="margin-top: 20px; color: var(--text-secondary);">
-                    📧 Wir schreiben dir in Kürze! Überprüfe dein E-Mail-Postfach.
+                    📧 Schau in deine Email rein und warte auf weitere Details.
                 </p>
                 <p style="color: var(--text-tertiary); font-size: 13px; margin-top: 10px;">
-                    (Schau auch in deinem Spam-Ordner nach)
+                    Du erhältst den Einladungslink zur Telegram-Gruppe nach Genehmigung durch unser Team.
                 </p>
             </div>
         </div>
 
         <button class="btn" onclick="backToShop()" style="margin-top: 20px;">
-            ← Zurück zum Shop
+            Zurück zum Shop
         </button>
     `;
 
