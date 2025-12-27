@@ -23,7 +23,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:8000', 'http://localhost:3000', 'http://127.0.0.1:8000', 'http://127.0.0.1:3000'],
+  origin: ['http://localhost:8000', 'http://localhost:3000', 'http://127.0.0.1:8000', 'http://127.0.0.1:3000', 'https://vip-shop-jade.vercel.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-admin-secret']
@@ -37,7 +37,7 @@ const initializeDatabase = async () => {
     // Überprüfe ob Tabellen existieren, erstelle sie falls nicht
     
     // Tabelle: orders
-    const { error: ordersError } = await supabase.from('orders').select('count', { count: 'exact', head: true });
+    const { error: ordersError } = await supabase.ubm('orders').select('count', { count: 'exact', head: true });
     
     if (ordersError && ordersError.code === 'PGRST116') {
       // Tabelle existiert nicht, erstelle sie
