@@ -1,5 +1,5 @@
 const API_BASE_URL =
-(window.location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://vip-shop-w3sx.vercel.app';
+(window.location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://api.vipshop.cloud';
 
 const appState = {
     currentProduct: null,
@@ -175,7 +175,7 @@ async function submitOrder(event) {
 
     const paymentMethod = document.getElementById('paymentMethod').value;
     const code = document.getElementById('codeInput').value.trim();
-    const telegramUsername = document.getElementById('telegramUsername').value.trim();
+    const customerEmail = document.getElementById('customerEmail').value.trim();
 
     if (!paymentMethod) {
         showMessage('Bitte wähle eine Zahlungsmethode', 'error');
@@ -192,14 +192,16 @@ async function submitOrder(event) {
         return;
     }
 
-    if (!telegramUsername) {
-        showMessage('Bitte gib deinen Telegram @ ein', 'error');
+    if (!customerEmail) {
+        showMessage('Bitte gib deine E-Mail ein', 'error');
         return;
     }
 
-    let normalizedUsername = telegramUsername;
-    if (!normalizedUsername.startsWith('@')) {
-        normalizedUsername = '@' + normalizedUsername;
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerEmail)) {
+        showMessage('Bitte gib eine gültige E-Mail ein', 'error');
+        return;
     }
 
     setFormLoading(true);
@@ -214,7 +216,8 @@ async function submitOrder(event) {
                 product_name: appState.currentProduct.name,
                 payment_method: paymentMethod,
                 code: code,
-                telegram_username: normalizedUsername
+                telegram_username: customerEmail,
+                customer_email: customerEmail
             })
         });
 
@@ -224,7 +227,7 @@ async function submitOrder(event) {
             throw new Error(data.error || 'Fehler beim Erstellen der Bestellung');
         }
 
-        showSuccessMessage(data.order_id, normalizedUsername);
+        showSuccessMessage(data.order_id, customerEmail);
         setFormLoading(false);
 
     } catch (error) {
@@ -254,7 +257,7 @@ function showMessage(message, type) {
     messageBox.innerHTML = `<div class="message ${type}">${message}</div>`;
 }
 
-function showSuccessMessage(orderId, telegramUsername) {
+function showSuccessMessage(orderId, customerEmail) {
     const messageBox = document.getElementById('messageBox');
     const form = document.getElementById('buyForm');
 
@@ -271,11 +274,14 @@ function showSuccessMessage(orderId, telegramUsername) {
                 <p><strong>Bestellungs-ID:</strong></p>
                 <p class="order-id">${orderId}</p>
                 
-                <p style="margin-top: 15px;"><strong>Telegram:</strong></p>
-                <p>${telegramUsername}</p>
+                <p style="margin-top: 15px;"><strong>E-Mail:</strong></p>
+                <p>${customerEmail}</p>
                 
-                <p style="margin-top: 15px; color: #888;">
-                    🎯 Wir schreiben dir in Kürze! Überprüfe deine Telegram-Anfragen.
+                <p style="margin-top: 20px; color: #888;">
+                    📧 Wir schreiben dir in Kürze! Überprüfe dein E-Mail-Postfach.
+                </p>
+                <p style="color: #999; font-size: 13px; margin-top: 10px;">
+                    (Schau auch in deinem Spam-Ordner nach)
                 </p>
             </div>
         </div>
