@@ -356,11 +356,12 @@ app.post('/admin/finish/:id', authenticateAdmin, async (req, res) => {
     }
 
     // Send completion email with code
-    try {
-      await sendCompletionEmail(order.customer_email, id, order.product_name, order.code);
-    } catch (emailError) {
-      console.error('Warning: Could not send completion email:', emailError);
-    }
+    // COMMENTED OUT: No email should be sent when finishing an order
+    // try {
+    //   await sendCompletionEmail(order.customer_email, id, order.product_name, order.code);
+    // } catch (emailError) {
+    //   console.error('Warning: Could not send completion email:', emailError);
+    // }
 
     res.json({
       success: true,
