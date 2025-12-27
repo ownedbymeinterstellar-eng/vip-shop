@@ -437,6 +437,16 @@ function addTiltEffect() {
     const cards = document.querySelectorAll('.product-card');
     
     cards.forEach(card => {
+        // Get original scale from computed style
+        const getOriginalScale = (element) => {
+            if (element.classList.contains('platinum')) return 1.08;
+            if (element.classList.contains('gold')) return 1;
+            if (element.classList.contains('silver')) return 1;
+            return 1;
+        };
+        
+        const originalScale = getOriginalScale(card);
+        
         card.addEventListener('mousemove', (e) => {
             const rect = card.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -446,11 +456,11 @@ function addTiltEffect() {
             const rotateX = ((y - rect.height / 2) / rect.height) * 10;
             const rotateY = ((x - rect.width / 2) / rect.width) * -10;
             
-            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            card.style.transform = `scale(${originalScale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
         });
         
         card.addEventListener('mouseleave', () => {
-            card.style.transform = 'rotateX(0) rotateY(0)';
+            card.style.transform = `scale(${originalScale})`;
         });
     });
 }
