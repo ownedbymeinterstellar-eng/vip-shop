@@ -108,11 +108,13 @@ async function submitOrder(e) {
         const data = await response.json();
 
         if (!response.ok) {
+            setFormLoading(false);
             throw new Error(data.error || 'Fehler beim Erstellen der Bestellung');
         }
 
+        // Success - show success message before resetting form loading state
         showSuccessMessage(data.order_id, customerEmail);
-        setFormLoading(false);
+        // Don't call setFormLoading(false) here as the form is already hidden
 
     } catch (error) {
         console.error('Error:', error);
@@ -140,7 +142,9 @@ function showSuccessMessage(orderId, customerEmail) {
     const messageBox = document.getElementById('messageBox');
     const form = document.getElementById('buyForm');
 
+    // Hide form and show success message
     form.style.display = 'none';
+    messageBox.style.display = 'block';
 
     messageBox.innerHTML = `
         <div class="success-message">
@@ -170,14 +174,31 @@ function showSuccessMessage(orderId, customerEmail) {
         </button>
     `;
 
-    messageBox.scrollIntoView({ behavior: 'smooth' });
+    // Scroll to success message
+    setTimeout(() => {
+        messageBox.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
 }
 
 function backToShop() {
-    document.getElementById('buyForm').style.display = 'block';
-    document.getElementById('buyForm').reset();
-    document.getElementById('messageBox').innerHTML = '';
+    const form = document.getElementById('buyForm');
+    const messageBox = document.getElementById('messageBox');
+    
+    form.style.display = 'block';
+    messageBox.style.display = 'none';
+    messageBox.innerHTML = '';
+    form.reset();
     document.getElementById('productName').value = '';
+    
+    // Reset button state
+    const btn = form.querySelector('button');
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Bestätigen & Beitreten';
+    }
+    
+    // Scroll to form
+    form.scrollIntoView({ behavior: 'smooth' });
 }
 
 // ==================== TOAST NOTIFICATIONS ====================
