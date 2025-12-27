@@ -37,7 +37,7 @@ const initializeDatabase = async () => {
     // Überprüfe ob Tabellen existieren, erstelle sie falls nicht
     
     // Tabelle: orders
-    const { error: ordersError } = await supabase.ubm('orders').select('count', { count: 'exact', head: true });
+    const { error: ordersError } = await supabase.from('orders').select('count', { count: 'exact', head: true });
     
     if (ordersError && ordersError.code === 'PGRST116') {
       // Tabelle existiert nicht, erstelle sie
