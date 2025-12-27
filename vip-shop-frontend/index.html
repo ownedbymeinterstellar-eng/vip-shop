@@ -181,6 +181,35 @@
                 </button>
             </form>
 
+            <!-- Confirmation Modal -->
+            <div id="confirmationModal" class="confirmation-modal">
+                <div class="confirmation-content">
+                    <h3>Sind deine Daten alle korrekt?</h3>
+                    <div class="confirmation-details">
+                        <div class="confirmation-item">
+                            <span class="label">VIP-Level:</span>
+                            <span class="value" id="confirmProduct">-</span>
+                        </div>
+                        <div class="confirmation-item">
+                            <span class="label">Zahlungsmethode:</span>
+                            <span class="value" id="confirmPayment">-</span>
+                        </div>
+                        <div class="confirmation-item">
+                            <span class="label">E-Mail:</span>
+                            <span class="value" id="confirmEmail">-</span>
+                        </div>
+                    </div>
+                    <div class="confirmation-buttons">
+                        <button class="btn-confirm" id="confirmYes">
+                            ✓ Ja, fortfahren
+                        </button>
+                        <button class="btn-cancel" id="confirmNo">
+                            ✗ Abbrechen
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Payment Instructions -->
             <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--text-tertiary);">
                 <div style="background: rgba(212, 175, 55, 0.1); border-left: 4px solid var(--gold); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
@@ -316,6 +345,7 @@
         </div>
     </div>
 
+    <script src="https://www.google.com/recaptcha/api.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

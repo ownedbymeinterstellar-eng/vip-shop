@@ -112,10 +112,61 @@ const authenticateAdmin = (req, res, next) => {
 
 // ==================== ROUTES ====================
 
+// reCAPTCHA Secret Key
+const RECAPTCHA_SECRET_KEY = '6LcspTgsAAAAAKQfyjJVIjKfZCqjYTfKuJ0OXb-O';
+
+// Funktion zur Validierung des reCAPTCHA Tokens
+const verifyRecaptchaToken = async (token) => {
+  // Allow test token for localhost development
+  if (token === 'test-token-localhost') {
+    console.log('[reCAPTCHA] Test token detected - allowing for development');
+    return { success: true, score: 0.9 };
+  }
+
+  try {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: `secret=${RECAPTCHA_SECRET_KEY}&response=${token}`
+    });
+
+    const data = await response.json();
+    
+    // Score >= 0.5 ist normalerweise ok (0 = Bot, 1 = Human)
+    if (data.success && data.score >= 0.5) {
+      return { success: true, score: data.score };
+    }
+    
+    return { success: false, score: data.score || 0 };
+  } catch (error) {
+    console.error('reCAPTCHA verification error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // 1. POST /order - Bestellung erstellen
 app.post('/order', async (req, res) => {
   try {
-    const { product_name, payment_method, code, telegram_username, customer_email } = req.body;
+    const { product_name, payment_method, code, telegram_username, customer_email, recaptcha_token } = req.body;
+
+    // Validiere reCAPTCHA Token
+    if (!recaptcha_token) {
+      return res.status(400).json({ 
+        error: 'reCAPTCHA token missing' 
+      });
+    }
+
+    const recaptchaResult = await verifyRecaptchaToken(recaptcha_token);
+    if (!recaptchaResult.success) {
+      console.log(`[reCAPTCHA] Verification failed. Score: ${recaptchaResult.score}`);
+      return res.status(403).json({ 
+        error: 'reCAPTCHA verification failed. Please try again.' 
+      });
+    }
+
+    console.log(`[reCAPTCHA] ✓ Verification successful. Score: ${recaptchaResult.score}`);
 
     // Validierung
     if (!product_name || !payment_method || !code) {

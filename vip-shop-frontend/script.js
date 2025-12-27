@@ -1,6 +1,8 @@
 const API_BASE_URL =
     (window.location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://api.vipshop.cloud';
 
+const RECAPTCHA_SITE_KEY = '6LcspTgsAAAAALKJxXU1QPKKYqGxi_KHObsxVlvO';
+
 const appState = {
     currentProduct: null,
     isLoading: false
@@ -90,19 +92,46 @@ async function submitOrder(e) {
         return;
     }
 
-    // Show confirmation dialog
-    const confirmed = confirm(
-        `Sind deine Daten alle korrekt?\n\n` +
-        `VIP-Level: ${productName}\n` +
-        `Zahlungsmethode: ${paymentMethod}\n` +
-        `E-Mail: ${customerEmail}\n\n` +
-        `Wenn alles stimmt, klicke OK zum Fortfahren.`
-    );
+    // Generate reCAPTCHA token FIRST
+    let recaptchaToken = 'test-token-localhost'; // Default für localhost
+    
+    // Nur auf Production reCAPTCHA verwenden
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        // Check if reCAPTCHA is loaded
+        if (typeof grecaptcha === 'undefined') {
+            console.error('reCAPTCHA not loaded');
+            showToast('Sicherheitssystem wird noch geladen. Bitte warte kurz und versuche erneut.', 'error');
+            return;
+        }
 
-    if (!confirmed) {
-        return;
+        try {
+            console.log('Generating reCAPTCHA token...');
+            recaptchaToken = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submitOrder' });
+            console.log('reCAPTCHA token generated successfully');
+        } catch (error) {
+            console.error('reCAPTCHA error:', error);
+            showToast('Sicherheitsüberprüfung fehlgeschlagen: ' + error.message, 'error');
+            return;
+        }
+    } else {
+        console.log('Localhost detected - using test token for reCAPTCHA');
     }
+    
+    try {
+        
+        // Then show confirmation modal with the token
+        showConfirmationModal(productName, paymentMethod, customerEmail, recaptchaToken, () => {
+            // User confirmed - proceed with order
+            proceedWithOrder(productName, paymentMethod, code1, code2, customerEmail, recaptchaToken);
+        });
+    } catch (error) {
+        console.error('reCAPTCHA error:', error);
+        showToast('Sicherheitsüberprüfung fehlgeschlagen: ' + error.message, 'error');
+    }
+}
 
+// Proceed with order submission
+async function proceedWithOrder(productName, paymentMethod, code1, code2, customerEmail, recaptchaToken) {
     setFormLoading(true);
 
     try {
@@ -119,7 +148,8 @@ async function submitOrder(e) {
                 payment_method: paymentMethod,
                 code: finalCode,
                 telegram_username: customerEmail,
-                customer_email: customerEmail
+                customer_email: customerEmail,
+                recaptcha_token: recaptchaToken
             })
         });
 
@@ -350,6 +380,51 @@ class CursorTracker {
 
         animate();
     }
+}
+
+// ==================== CONFIRMATION MODAL ====================
+
+function showConfirmationModal(productName, paymentMethod, email, recaptchaToken, onConfirm) {
+    const modal = document.getElementById('confirmationModal');
+    
+    // Fill in the modal details
+    document.getElementById('confirmProduct').textContent = productName;
+    document.getElementById('confirmPayment').textContent = paymentMethod;
+    document.getElementById('confirmEmail').textContent = email;
+    
+    // Show modal
+    modal.classList.add('active');
+    
+    // Set up button handlers
+    const confirmBtn = document.getElementById('confirmYes');
+    const cancelBtn = document.getElementById('confirmNo');
+    
+    const handleConfirm = () => {
+        modal.classList.remove('active');
+        confirmBtn.removeEventListener('click', handleConfirm);
+        cancelBtn.removeEventListener('click', handleCancel);
+        document.removeEventListener('keydown', handleEscape);
+        onConfirm();
+    };
+    
+    const handleCancel = () => {
+        modal.classList.remove('active');
+        confirmBtn.removeEventListener('click', handleConfirm);
+        cancelBtn.removeEventListener('click', handleCancel);
+        document.removeEventListener('keydown', handleEscape);
+    };
+    
+    confirmBtn.addEventListener('click', handleConfirm);
+    cancelBtn.addEventListener('click', handleCancel);
+    
+    // Close on escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            handleCancel();
+        }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
 }
 
 // ==================== INITIALIZATION ====================
