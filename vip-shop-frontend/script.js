@@ -28,16 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Payment method change handler
     const paymentMethod = document.getElementById('paymentMethod');
-    const codeInput = document.getElementById('code');
+    const codeInput1 = document.getElementById('code1');
     
     if (paymentMethod) {
         paymentMethod.addEventListener('change', function() {
             if (this.value === 'paysafecard') {
-                codeInput.placeholder = 'z.B. 1234-5678-9012-3456';
+                codeInput1.placeholder = 'z.B. 1234-5678-9012-3456';
             } else if (this.value === 'cryptovoucher') {
-                codeInput.placeholder = 'z.B. M8L47P5396JFNG6BLM5698ZNZD0G7NXV';
-            } else if (this.value === 'paypal') {
-                codeInput.placeholder = 'z.B. PayPal-Transaktions-ID';
+                codeInput1.placeholder = 'z.B. M8L47P5396JFNG6BLM5698ZNZD0G7NXV';
             }
         });
     }
@@ -189,12 +187,10 @@ function setFormLoading(loading) {
 function showSuccessMessage(orderId, customerEmail) {
     const messageBox = document.getElementById('messageBox');
     const form = document.getElementById('buyForm');
-    const paymentInstructions = document.getElementById('paymentInstructions');
 
     // Hide form and show success message
     form.style.display = 'none';
     messageBox.style.display = 'block';
-    paymentInstructions.style.display = 'block';
 
     messageBox.innerHTML = `
         <div class="success-message">
@@ -233,11 +229,9 @@ function showSuccessMessage(orderId, customerEmail) {
 function backToShop() {
     const form = document.getElementById('buyForm');
     const messageBox = document.getElementById('messageBox');
-    const paymentInstructions = document.getElementById('paymentInstructions');
     
     form.style.display = 'block';
     messageBox.style.display = 'none';
-    paymentInstructions.style.display = 'none';
     messageBox.innerHTML = '';
     form.reset();
     document.getElementById('productName').value = '';
@@ -246,7 +240,7 @@ function backToShop() {
     const btn = form.querySelector('button');
     if (btn) {
         btn.disabled = false;
-        btn.textContent = 'Bestätigen & Beitreten';
+        btn.textContent = '✓ Bestätigen & Beitreten';
     }
     
     // Scroll to form

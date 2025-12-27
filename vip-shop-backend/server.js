@@ -18,6 +18,7 @@ import {
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
 
 // Supabase Client initialisieren
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -25,6 +26,11 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('❌ Fehler: SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY müssen gesetzt sein!');
+  process.exit(1);
+}
+
+if (!RECAPTCHA_SECRET_KEY) {
+  console.error('❌ Fehler: RECAPTCHA_SECRET_KEY muss gesetzt sein!');
   process.exit(1);
 }
 
@@ -113,7 +119,7 @@ const authenticateAdmin = (req, res, next) => {
 // ==================== ROUTES ====================
 
 // reCAPTCHA Secret Key
-const RECAPTCHA_SECRET_KEY = '6LcspTgsAAAAAKQfyjJVIjKfZCqjYTfKuJ0OXb-O';
+// RECAPTCHA_SECRET_KEY ist jetzt aus process.env (siehe oben)
 
 // Funktion zur Validierung des reCAPTCHA Tokens
 const verifyRecaptchaToken = async (token) => {
