@@ -3,6 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  sendInitialOrderEmail,
+  sendApprovalEmail,
+  sendRejectionEmail,
+  sendCompletionEmail
+} from './email-service.js';
 
 dotenv.config();
 
@@ -50,7 +56,9 @@ const initializeDatabase = async () => {
             payment_method TEXT NOT NULL,
             code TEXT NOT NULL UNIQUE,
             telegram_username TEXT,
+            customer_email TEXT,
             status TEXT DEFAULT 'pending',
+            rejection_reason TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
           )
@@ -98,7 +106,7 @@ const authenticateAdmin = (req, res, next) => {
 // 1. POST /order - Bestellung erstellen
 app.post('/order', async (req, res) => {
   try {
-    const { product_name, payment_method, code, telegram_username } = req.body;
+    const { product_name, payment_method, code, telegram_username, customer_email } = req.body;
 
     // Validierung
     if (!product_name || !payment_method || !code) {
@@ -107,9 +115,9 @@ app.post('/order', async (req, res) => {
       });
     }
 
-    if (!telegram_username || telegram_username.trim().length === 0) {
+    if (!customer_email || customer_email.trim().length === 0) {
       return res.status(400).json({ 
-        error: 'Telegram username is required' 
+        error: 'Customer email is required' 
       });
     }
 
@@ -143,6 +151,7 @@ app.post('/order', async (req, res) => {
         payment_method: payment_method.toLowerCase(),
         code,
         telegram_username: telegram_username.trim(),
+        customer_email: customer_email.trim(),
         status: 'pending',
         created_at: now,
         updated_at: now
@@ -157,6 +166,14 @@ app.post('/order', async (req, res) => {
       }
       console.error('DB Error:', orderError);
       return res.status(500).json({ error: 'Database error' });
+    }
+
+    // Send initial order email
+    try {
+      await sendInitialOrderEmail(customer_email.trim(), orderId, product_name);
+    } catch (emailError) {
+      console.error('Warning: Could not send order email:', emailError);
+      // Don't fail the order creation if email fails
     }
 
     res.status(201).json({
@@ -269,6 +286,13 @@ app.post('/admin/approve/:id', authenticateAdmin, async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
+    // Send approval email
+    try {
+      await sendApprovalEmail(order.customer_email, id, order.product_name);
+    } catch (emailError) {
+      console.error('Warning: Could not send approval email:', emailError);
+    }
+
     res.json({
       success: true,
       message: 'Order approved',
@@ -322,6 +346,13 @@ app.post('/admin/finish/:id', authenticateAdmin, async (req, res) => {
       return res.status(500).json({ error: 'Failed to mark code as used' });
     }
 
+    // Send completion email with code
+    try {
+      await sendCompletionEmail(order.customer_email, id, order.product_name, order.code);
+    } catch (emailError) {
+      console.error('Warning: Could not send completion email:', emailError);
+    }
+
     res.json({
       success: true,
       message: 'Order finished and code marked as used',
@@ -339,11 +370,23 @@ app.post('/admin/finish/:id', authenticateAdmin, async (req, res) => {
 app.post('/admin/reject/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const { reason } = req.body;
     const now = new Date().toISOString();
+
+    // Hole die Bestellung zuerst
+    const { data: order, error: fetchError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
 
     const { error } = await supabase
       .from('orders')
-      .update({ status: 'rejected', updated_at: now })
+      .update({ status: 'rejected', rejection_reason: reason || '', updated_at: now })
       .eq('id', id);
 
     if (error) {
@@ -351,22 +394,19 @@ app.post('/admin/reject/:id', authenticateAdmin, async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Überprüfe ob Bestellung existiert
-    const { data: order } = await supabase
-      .from('orders')
-      .select('id')
-      .eq('id', id)
-      .single();
-
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+    // Send rejection email
+    try {
+      await sendRejectionEmail(order.customer_email, id, order.product_name, reason || 'Keine Details angegeben');
+    } catch (emailError) {
+      console.error('Warning: Could not send rejection email:', emailError);
     }
 
     res.json({
       success: true,
       message: 'Order rejected',
       order_id: id,
-      status: 'rejected'
+      status: 'rejected',
+      reason: reason || null
     });
   } catch (error) {
     console.error('Error:', error);
