@@ -89,15 +89,22 @@ export async function getChatIdByTelegramId(telegramId) {
 
 export async function processTelegramUpdate(update) {
   try {
-    const message = update.message;
-    
-    if (!message || !message.from) {
+    if (!update || !update.message) {
+      console.log('No message in update');
       return;
     }
 
-    const chatId = message.chat.id;
-    const telegramId = message.from.id;
+    const message = update.message;
+    const chatId = message.chat?.id;
+    const telegramId = message.from?.id;
     const text = message.text || '';
+
+    if (!chatId || !telegramId) {
+      console.log('Missing chatId or telegramId');
+      return;
+    }
+
+    console.log(`Processing Telegram update from user ${telegramId}`);
 
     // Store user mapping
     await storeTelegramUser(chatId, telegramId);
@@ -116,11 +123,15 @@ Du erhältst hier Benachrichtigungen über:
 <i>Halte diesen Chat offen, um Nachrichten zu erhalten!</i>
       `;
       
-      await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
-        chat_id: chatId,
-        text: welcomeMessage,
-        parse_mode: 'HTML'
-      });
+      try {
+        await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
+          chat_id: chatId,
+          text: welcomeMessage,
+          parse_mode: 'HTML'
+        });
+      } catch (sendError) {
+        console.error('Error sending welcome message:', sendError.message);
+      }
     }
   } catch (error) {
     console.error('Error processing Telegram update:', error);
