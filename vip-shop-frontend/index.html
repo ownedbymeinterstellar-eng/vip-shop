@@ -30,22 +30,22 @@
 
         <!-- Products Grid -->
         <div class="products">
-            <!-- Silver: Direct Link -->
+            <!-- Silver: VIP Direct -->
             <div class="product-card silver">
-                <div class="product-badge badge-silver">Direct Link</div>
+                <div class="product-badge badge-silver">VIP Direct</div>
                 <div class="product-info">
                     <h3>🔗 VIP Direct</h3>
-                    <div class="product-price">5€</div>
+                    <div class="product-price">20€</div>
                     <p class="product-description">
                         Perfekt als Einstieg. Direkte Links ohne Umwege.
                     </p>
                     <ul class="product-features">
                         <li>Direkte Links zu allen Inhalten</li>
                         <li>Keine Linkvertise mehr</li>
-                        <li>Tägliche Updates</li>
-                        <li>Deutsche & International Creator</li>
+                        <li>Regelmäßige Updates</li>
+                        <li>Deutsche & Internationale Creator</li>
                     </ul>
-                    <button class="buy-btn" onclick="selectProduct('VIP Direct', 5)">
+                    <button class="buy-btn" onclick="selectProduct('VIP Direct', 20)">
                         → Kaufen
                     </button>
                 </div>
@@ -57,20 +57,20 @@
                 <div class="product-badge badge-gold">VIP Standard</div>
                 <div class="product-info">
                     <h3>✨ VIP Standard</h3>
-                    <div class="product-price">20€</div>
+                    <div class="product-price">50€</div>
                     <p class="product-description">
                         Das beste Preis-Leistungs-Verhältnis. Unsere beliebteste Option!
                     </p>
                     <ul class="product-features">
                         <li>Riesige Auswahl an Creatorn</li>
                         <li>Deutsche & Internationale Inhalte</li>
-                        <li>Tägliche Neue Uploads</li>
+                        <li>Regelmäßige Neue Uploads</li>
+                        <li>100+ neue Creator monatlich</li>
                         <li>Schnelle Aufnahme in die Gruppe</li>
                         <li>24/7 Support</li>
-                        <li>30+ neue Creator monatlich</li>
                     </ul>
-                    <button class="buy-btn" onclick="selectProduct('VIP Standard', 20)">
-                        → Jetzt beitreten
+                    <button class="buy-btn" onclick="selectProduct('VIP Standard', 50)">
+                        → Kaufen
                     </button>
                 </div>
             </div>
@@ -80,20 +80,20 @@
                 <div class="product-badge badge-platinum">VIP Plus</div>
                 <div class="product-info">
                     <h3>💎 VIP Plus</h3>
-                    <div class="product-price">50€</div>
+                    <div class="product-price">60€</div>
                     <p class="product-description">
                         Das ultimative Erlebnis. Alle Premium-Features freigeschaltet.
                     </p>
                     <ul class="product-features">
-                        <li>Alles aus VIP Standard</li>
+                        <li>Alles aus VIP Direct & Standard</li>
                         <li>Exklusive Bypasser & Tools</li>
                         <li>Riesige Content-Datenbank</li>
+                        <li>100+ neue Creator monatlich</li>
                         <li>Premium Support (Priorität)</li>
-                        <li>Early Access zu neuen Inhalten</li>
                         <li>Lifetime Updates inklusive</li>
                     </ul>
-                    <button class="buy-btn" onclick="selectProduct('VIP Plus', 50)">
-                        → Premium Upgrade
+                    <button class="buy-btn" onclick="selectProduct('VIP Plus', 60)">
+                        → Kaufen
                     </button>
                 </div>
             </div>
@@ -130,19 +130,33 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="code">Code *
+                    <label for="code1">Code 1 *
                         <div class="info-icon" style="position: relative;">
                             ?
-                            <div class="tooltip">Dein Zahlungscode</div>
+                            <div class="tooltip">Dein erster Zahlungscode</div>
                         </div>
                     </label>
                     <input 
                         type="text" 
-                        id="code" 
+                        id="code1" 
                         placeholder="z.B. XXXX-XXXX-XXXX" 
                         required
                     >
-                    <div id="codeError" style="color: var(--error); font-size: 12px; margin-top: 5px; display: none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="code2">Code 2 *
+                        <div class="info-icon" style="position: relative;">
+                            ?
+                            <div class="tooltip">Dein zweiter Zahlungscode</div>
+                        </div>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="code2" 
+                        placeholder="z.B. XXXX-XXXX-XXXX" 
+                        required
+                    >
                 </div>
 
                 <div class="form-group">
@@ -253,7 +267,7 @@
                     </div>
                     <div class="review-date">20.12.2025</div>
                     <p class="review-text">
-                        "Guter Einstieg für den Preis. Keine nervigen Linkvertise mehr, alles direkt erreichbar. Hätte mir noch ein bisschen mehr Content gewünscht aber für 5€ passt es. Schnelle Aufnahme nach Zahlung."
+                        "Guter Einstieg für den Preis. Keine nervigen Linkvertise mehr, alles direkt erreichbar. Hätte mir noch ein bisschen mehr Content gewünscht aber für 20€ passt es. Schnelle Aufnahme nach Zahlung."
                     </p>
                 </div>
 
@@ -268,7 +282,7 @@
                     </div>
                     <div class="review-date">20.12.2025</div>
                     <p class="review-text">
-                        "Top Service! Die Auswahl ist mega und regelmäßig kommen neue Sachen dazu. Bezahlung ging smooth über PayPal. Support antwortet schnell und hilft bei Fragen. Für 20€ absolut fair, kann ich nur weiterempfehlen."
+                        "Top Service! Die Auswahl ist mega und regelmäßig kommen neue Sachen dazu. Bezahlung ging smooth über Paysafecard. Support antwortet schnell und hilft bei Fragen. Für 50€ absolut fair, kann ich nur weiterempfehlen."
                     </p>
                 </div>
 
@@ -283,7 +297,7 @@
                     </div>
                     <div class="review-date">17.12.2025</div>
                     <p class="review-text">
-                        "Hammer! Die Plus Version lohnt sich definitiv. Riesige Datenbank, super Tools und der Bypasser spart mega viel Zeit. Organisiert und übersichtlich. 50€ sind ein Schnäppchen für das was man bekommt. 10/10"
+                        "Hammer! Die Plus Version lohnt sich definitiv. Riesige Datenbank, super Tools und der Bypasser spart mega viel Zeit. Organisiert und übersichtlich. 60€ sind ein Schnäppchen für das was man bekommt. 10/10"
                     </p>
                 </div>
 
@@ -298,7 +312,7 @@
                     </div>
                     <div class="review-date">08.12.2025</div>
                     <p class="review-text">
-                        "Hallo Leona, du hast wirklich 5 Sterne verdient. Bei Fragen bist du immer erreichbar. Die Zahlung hat hervorragend funktioniert über PayPal. Die Gruppenaufnahme war auch wirklich super. Diese ging umgehend nachdem die Zahlung erledigt wurde. Viele Grüße"
+                        "Hallo Leona, du hast wirklich 5 Sterne verdient. Bei Fragen bist du immer erreichbar. Die Zahlung hat hervorragend funktioniert über Paysafecard. Die Gruppenaufnahme war auch wirklich super. Diese ging umgehend nachdem die Zahlung erledigt wurde. Viele Grüße"
                     </p>
                 </div>
             </div>
