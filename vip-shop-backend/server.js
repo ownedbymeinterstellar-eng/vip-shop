@@ -391,7 +391,15 @@ app.post('/admin/reject/:id', authenticateAdmin, async (req, res) => {
 
 // ==================== TELEGRAM WEBHOOK ====================
 
-app.post('/telegram/webhook', express.json(), async (req, res) => {
+// Test endpoint
+app.get('/telegram/webhook', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    message: 'Telegram webhook endpoint is active'
+  });
+});
+
+app.post('/telegram/webhook', async (req, res) => {
   try {
     console.log('📨 Telegram webhook received');
     processTelegramUpdate(req.body);
