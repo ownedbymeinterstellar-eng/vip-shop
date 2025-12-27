@@ -189,10 +189,12 @@ function setFormLoading(loading) {
 function showSuccessMessage(orderId, customerEmail) {
     const messageBox = document.getElementById('messageBox');
     const form = document.getElementById('buyForm');
+    const paymentInstructions = document.getElementById('paymentInstructions');
 
     // Hide form and show success message
     form.style.display = 'none';
     messageBox.style.display = 'block';
+    paymentInstructions.style.display = 'block';
 
     messageBox.innerHTML = `
         <div class="success-message">
@@ -231,9 +233,11 @@ function showSuccessMessage(orderId, customerEmail) {
 function backToShop() {
     const form = document.getElementById('buyForm');
     const messageBox = document.getElementById('messageBox');
+    const paymentInstructions = document.getElementById('paymentInstructions');
     
     form.style.display = 'block';
     messageBox.style.display = 'none';
+    paymentInstructions.style.display = 'none';
     messageBox.innerHTML = '';
     form.reset();
     document.getElementById('productName').value = '';
@@ -427,6 +431,30 @@ function showConfirmationModal(productName, paymentMethod, email, recaptchaToken
     document.addEventListener('keydown', handleEscape);
 }
 
+// ==================== 3D TILT EFFECT ====================
+
+function addTiltEffect() {
+    const cards = document.querySelectorAll('.product-card');
+    
+    cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate rotation based on mouse position
+            const rotateX = ((y - rect.height / 2) / rect.height) * 10;
+            const rotateY = ((x - rect.width / 2) / rect.width) * -10;
+            
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'rotateX(0) rotateY(0)';
+        });
+    });
+}
+
 // ==================== INITIALIZATION ====================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -434,4 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize cursor tracker
     new CursorTracker();
+    
+    // Initialize 3D tilt effect
+    addTiltEffect();
 });
