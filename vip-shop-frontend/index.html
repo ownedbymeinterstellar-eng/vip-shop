@@ -130,17 +130,31 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="code">Zahlungscode *
+                    <label for="code1">Code 1 *
                         <div class="info-icon" style="position: relative;">
                             ?
-                            <div class="tooltip">Dein Zahlungscode</div>
+                            <div class="tooltip">Dein erster Zahlungscode (erforderlich)</div>
                         </div>
                     </label>
                     <input 
                         type="text" 
-                        id="code" 
+                        id="code1" 
                         placeholder="z.B. XXXX-XXXX-XXXX" 
                         required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="code2">Code 2 (optional)
+                        <div class="info-icon" style="position: relative;">
+                            ?
+                            <div class="tooltip">Zweiter Zahlungscode (optional, um Beträge zu kombinieren)</div>
+                        </div>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="code2" 
+                        placeholder="z.B. XXXX-XXXX-XXXX (optional)" 
                     >
                 </div>
 

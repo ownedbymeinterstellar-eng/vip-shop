@@ -48,7 +48,8 @@ async function submitOrder(e) {
 
     const productName = document.getElementById('productName').value;
     const paymentMethod = document.getElementById('paymentMethod').value;
-    const code = document.getElementById('code').value.trim();
+    const code1 = document.getElementById('code1').value.trim();
+    const code2 = document.getElementById('code2').value.trim();
     const customerEmail = document.getElementById('customerEmail').value.trim();
 
     // Validierung
@@ -62,13 +63,18 @@ async function submitOrder(e) {
         return;
     }
 
-    if (!code) {
-        showToast('Bitte gib deinen Code ein', 'error');
+    if (!code1) {
+        showToast('Bitte gib mindestens Code 1 ein', 'error');
         return;
     }
 
-    if (code.length < 5) {
-        showToast('Der Code ist zu kurz', 'error');
+    if (code1.length < 5) {
+        showToast('Code 1 ist zu kurz', 'error');
+        return;
+    }
+
+    if (code2 && code2.length < 5) {
+        showToast('Code 2 ist zu kurz', 'error');
         return;
     }
 
@@ -100,6 +106,9 @@ async function submitOrder(e) {
     setFormLoading(true);
 
     try {
+        // Combine codes - if code2 exists, combine them with |, otherwise just use code1
+        const finalCode = code2 ? code1 + '|' + code2 : code1;
+
         const response = await fetch(`${API_BASE_URL}/order`, {
             method: 'POST',
             headers: {
@@ -108,7 +117,7 @@ async function submitOrder(e) {
             body: JSON.stringify({
                 product_name: productName,
                 payment_method: paymentMethod,
-                code: code,
+                code: finalCode,
                 telegram_username: customerEmail,
                 customer_email: customerEmail
             })
