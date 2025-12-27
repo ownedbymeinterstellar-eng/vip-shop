@@ -202,10 +202,12 @@ function setFormLoading(loading) {
 function showSuccessMessage(orderId, customerEmail) {
     const messageBox = document.getElementById('messageBox');
     const form = document.getElementById('buyForm');
+    const paymentInstructions = document.getElementById('paymentInstructions');
 
     // Hide form and show success message
     form.style.display = 'none';
     messageBox.style.display = 'block';
+    paymentInstructions.style.display = 'block';
 
     messageBox.innerHTML = `
         <div class="success-message">
@@ -244,9 +246,11 @@ function showSuccessMessage(orderId, customerEmail) {
 function backToShop() {
     const form = document.getElementById('buyForm');
     const messageBox = document.getElementById('messageBox');
+    const paymentInstructions = document.getElementById('paymentInstructions');
     
     form.style.display = 'block';
     messageBox.style.display = 'none';
+    paymentInstructions.style.display = 'none';
     messageBox.innerHTML = '';
     form.reset();
     document.getElementById('productName').value = '';
