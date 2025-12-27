@@ -696,6 +696,18 @@
             renderOrders();
         }
 
+        // Handle filter button clicks properly
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    currentFilter = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    renderOrders();
+                });
+            });
+        });
+
         // ==================== MODALS ====================
 
         function showActionModal(button, orderId, action) {
@@ -778,7 +790,11 @@
                 endpoint = `/admin/finish/${orderId}`;
             } else if (action === 'reject') {
                 endpoint = `/admin/reject/${orderId}`;
-                const reason = document.getElementById('rejectionReason')?.value || '';
+                const reason = document.getElementById('rejectionReason')?.value.trim() || '';
+                if (!reason) {
+                    showToast('Bitte gib einen Grund für die Ablehnung an', 'error');
+                    return;
+                }
                 body = JSON.stringify({ reason });
             }
 
