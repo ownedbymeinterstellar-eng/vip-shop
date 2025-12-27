@@ -13,9 +13,24 @@ const appState = {
 function selectProduct(productName, price) {
     appState.currentProduct = { name: productName, price: price };
     document.getElementById('productName').value = productName;
+    document.getElementById('productSelect').value = productName + '|' + price;
     
     // Smooth scroll to form
     document.querySelector('.buy-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function selectProductFromDropdown() {
+    const select = document.getElementById('productSelect');
+    const value = select.value;
+    
+    if (!value) {
+        document.getElementById('productName').value = '';
+        appState.currentProduct = null;
+        return;
+    }
+    
+    const [productName, price] = value.split('|');
+    selectProduct(productName, parseInt(price));
 }
 
 // ==================== FORM HANDLING ====================

@@ -148,15 +148,23 @@
             <h2>💳 Bestellung</h2>
             <form id="buyForm">
                 <div class="form-group">
-                    <label for="productName">VIP-Level *</label>
+                    <label for="productSelect">VIP-Level *</label>
+                    <select 
+                        id="productSelect" 
+                        required
+                        onchange="selectProductFromDropdown()"
+                    >
+                        <option value="">-- Wähle dein VIP-Level --</option>
+                        <option value="Silber|20">🔗 Silber - 20€</option>
+                        <option value="Gold|50">✨ Gold - 50€</option>
+                        <option value="Platinum|60">💎 Platinum - 60€</option>
+                    </select>
                     <input 
-                        type="text" 
-                        id="productName" 
-                        placeholder="Bitte wähle ein VIP-Level" 
-                        readonly
+                        type="hidden" 
+                        id="productName"
                         required
                     >
-                    <small>Klicke auf einen der Pläne oben</small>
+                    <small>Wähle aus dem Dropdown oder klicke auf einen der Pläne oben</small>
                 </div>
 
                 <div class="form-group">
