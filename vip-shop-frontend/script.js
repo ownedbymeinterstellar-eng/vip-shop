@@ -184,10 +184,25 @@ async function submitOrder(e) {
         return;
     }
 
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customerEmail)) {
+    // Validate email - only allow major email providers
+    const allowedDomains = [
+        'gmail.com', 'gmx.net', 'gmx.de', 'web.de', 'outlook.com', 'hotmail.com',
+        'yahoo.com', 'yahoo.de', 'protonmail.com', 'pm.me', 't-online.de',
+        'freenet.de', 'vodafone.de', 'arcor.de', 'aol.com', 'mail.com',
+        'icloud.com', 'mail.ru', 'yandex.com', 'wanadoo.fr', 'orange.fr'
+    ];
+    
+    const emailRegex = /^[^\s@]+@([^\s@]+)$/;
+    const emailMatch = customerEmail.toLowerCase().match(emailRegex);
+    
+    if (!emailMatch) {
         showToast('Bitte gib eine gültige E-Mail ein', 'error');
+        return;
+    }
+    
+    const domain = emailMatch[1];
+    if (!allowedDomains.includes(domain)) {
+        showToast(`E-Mail-Domain nicht erlaubt. Bitte nutze einen großen Email-Provider (z.B. gmail.com, web.de, gmx.net)`, 'error');
         return;
     }
 
