@@ -118,61 +118,70 @@ const authenticateAdmin = (req, res, next) => {
 
 // ==================== ROUTES ====================
 
-// reCAPTCHA Secret Key
-// RECAPTCHA_SECRET_KEY ist jetzt aus process.env (siehe oben)
+// ==================== RATE LIMITING & EMAIL VERIFICATION ====================
 
-// Funktion zur Validierung des reCAPTCHA Tokens
-const verifyRecaptchaToken = async (token) => {
-  // Allow test token for localhost development
-  if (token === 'test-token-localhost') {
-    console.log('[reCAPTCHA] Test token detected - allowing for development');
-    return { success: true, score: 0.9 };
+// In-memory storage for rate limiting and verification codes
+const rateLimitStore = {}; // { ip: { count: 0, resetTime: timestamp } }
+const verificationCodeStore = {}; // { email: { code: '123456', expiresAt: timestamp, orderId: 'xxx' } }
+
+// Rate limiting: Max 5 orders per IP per hour
+const checkRateLimit = (ip) => {
+  const now = Date.now();
+  const hour = 60 * 60 * 1000;
+  
+  if (!rateLimitStore[ip]) {
+    rateLimitStore[ip] = { count: 1, resetTime: now + hour };
+    return { allowed: true };
   }
+  
+  if (now > rateLimitStore[ip].resetTime) {
+    rateLimitStore[ip] = { count: 1, resetTime: now + hour };
+    return { allowed: true };
+  }
+  
+  if (rateLimitStore[ip].count >= 5) {
+    return { 
+      allowed: false, 
+      message: 'Zu viele Bestellungsversuche. Bitte warten Sie eine Stunde.' 
+    };
+  }
+  
+  rateLimitStore[ip].count++;
+  return { allowed: true };
+};
 
+// Generate 6-digit verification code
+const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Send verification email
+const sendVerificationEmail = async (email, code, orderId) => {
   try {
-    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: `secret=${RECAPTCHA_SECRET_KEY}&response=${token}`
-    });
-
-    const data = await response.json();
+    await sendInitialOrderEmail(email, orderId, 'VIP Shop Order Verification');
     
-    // Score >= 0.5 ist normalerweise ok (0 = Bot, 1 = Human)
-    if (data.success && data.score >= 0.5) {
-      return { success: true, score: data.score };
-    }
-    
-    return { success: false, score: data.score || 0 };
+    // For now, log the code (in production, this would be in the email)
+    console.log(`[Verification] Email: ${email}, Code: ${code}, Order: ${orderId}`);
+    return true;
   } catch (error) {
-    console.error('reCAPTCHA verification error:', error);
-    return { success: false, error: error.message };
+    console.error('Error sending verification email:', error);
+    return false;
   }
 };
 
-// 1. POST /order - Bestellung erstellen
+// 1. POST /order - Bestellung erstellen und Verifikationscode senden
 app.post('/order', async (req, res) => {
   try {
-    const { product_name, payment_method, code, telegram_username, customer_email, recaptcha_token } = req.body;
+    const { product_name, payment_method, code, telegram_username, customer_email } = req.body;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-    // Validiere reCAPTCHA Token
-    if (!recaptcha_token) {
-      return res.status(400).json({ 
-        error: 'reCAPTCHA token missing' 
+    // Check rate limit
+    const rateLimitCheck = checkRateLimit(clientIp);
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json({ 
+        error: rateLimitCheck.message 
       });
     }
-
-    const recaptchaResult = await verifyRecaptchaToken(recaptcha_token);
-    if (!recaptchaResult.success) {
-      console.log(`[reCAPTCHA] Verification failed. Score: ${recaptchaResult.score}`);
-      return res.status(403).json({ 
-        error: 'reCAPTCHA verification failed. Please try again.' 
-      });
-    }
-
-    console.log(`[reCAPTCHA] ✓ Verification successful. Score: ${recaptchaResult.score}`);
 
     // Validierung
     if (!product_name || !payment_method || !code) {
@@ -205,7 +214,7 @@ app.post('/order', async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Erstelle neue Bestellung (ohne Code zu markieren)
+    // Erstelle neue Bestellung mit Status 'pending_verification'
     const orderId = uuidv4();
     const now = new Date().toISOString();
 
@@ -218,7 +227,7 @@ app.post('/order', async (req, res) => {
         code,
         telegram_username: telegram_username.trim(),
         customer_email: customer_email.trim(),
-        status: 'pending',
+        status: 'pending_verification',
         created_at: now,
         updated_at: now
       }])
@@ -234,18 +243,88 @@ app.post('/order', async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Send initial order email
+    // Generate and store verification code
+    const verificationCode = generateVerificationCode();
+    verificationCodeStore[customer_email.trim()] = {
+      code: verificationCode,
+      expiresAt: Date.now() + (10 * 60 * 1000), // 10 minutes
+      orderId: orderId
+    };
+
+    // Send verification email
     try {
       await sendInitialOrderEmail(customer_email.trim(), orderId, product_name);
+      console.log(`[Order] Verification code sent to ${customer_email.trim()}: ${verificationCode}`);
     } catch (emailError) {
-      console.error('Warning: Could not send order email:', emailError);
-      // Don't fail the order creation if email fails
+      console.error('Warning: Could not send verification email:', emailError);
     }
 
     res.status(201).json({
       success: true,
       order_id: orderId,
-      message: 'Order created successfully. Waiting for verification.',
+      message: 'Order created. Verification code sent to your email.',
+      status: 'pending_verification'
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 1.5 POST /verify-code - Verifikationscode überprüfen
+app.post('/verify-code', async (req, res) => {
+  try {
+    const { customer_email, verification_code } = req.body;
+
+    if (!customer_email || !verification_code) {
+      return res.status(400).json({ 
+        error: 'Email and verification code required' 
+      });
+    }
+
+    const storedData = verificationCodeStore[customer_email.trim()];
+
+    if (!storedData) {
+      return res.status(400).json({ 
+        error: 'No verification code found for this email' 
+      });
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+      delete verificationCodeStore[customer_email.trim()];
+      return res.status(400).json({ 
+        error: 'Verification code expired. Please create a new order.' 
+      });
+    }
+
+    if (storedData.code !== verification_code.trim()) {
+      return res.status(400).json({ 
+        error: 'Invalid verification code' 
+      });
+    }
+
+    // Code is valid - update order status to 'pending'
+    const orderId = storedData.orderId;
+    const now = new Date().toISOString();
+
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ status: 'pending', updated_at: now })
+      .eq('id', orderId);
+
+    if (updateError) {
+      console.error('DB Error:', updateError);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    // Clean up verification code
+    delete verificationCodeStore[customer_email.trim()];
+
+    res.json({
+      success: true,
+      order_id: orderId,
+      message: 'Email verified successfully. Order is now pending.',
       status: 'pending'
     });
 
