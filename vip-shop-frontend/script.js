@@ -1,5 +1,5 @@
 const API_BASE_URL =
-    (window.location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://api.vipshop.cloud';
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:3000' : 'https://api.vipshop.cloud';
 
 const appState = {
     currentProduct: null,
@@ -153,16 +153,27 @@ async function proceedWithOrder(productName, paymentMethod, code1, code2, custom
 
         const data = await response.json();
 
+        console.log('Order response:', response.status, data);
+
         if (!response.ok) {
             setFormLoading(false);
             throw new Error(data.error || 'Fehler beim Erstellen der Bestellung');
         }
 
+        console.log('Order created successfully:', data.order_id);
+
         // Store pending order info for verification
         appState.pendingOrderId = data.order_id;
         appState.pendingEmail = customerEmail;
 
+        // Store test code if provided (for development)
+        if (data.verification_code) {
+            appState.testVerificationCode = data.verification_code;
+            console.log('Test verification code:', data.verification_code);
+        }
+
         // Show verification code prompt
+        console.log('Showing verification prompt for:', customerEmail, data.order_id);
         showVerificationCodePrompt(customerEmail, data.order_id);
         setFormLoading(false);
 
@@ -193,10 +204,19 @@ function showVerificationCodePrompt(customerEmail, orderId) {
     const messageBox = document.getElementById('messageBox');
     const form = document.getElementById('buyForm');
 
+    console.log('messageBox element:', messageBox);
+    console.log('form element:', form);
+
+    if (!messageBox) {
+        console.error('messageBox element not found!');
+        return;
+    }
+
     // Hide form and show verification prompt
     form.style.display = 'none';
     messageBox.style.display = 'block';
 
+    console.log('Setting messageBox HTML...');
     messageBox.innerHTML = `
         <div class="verification-prompt">
             <div style="text-align: center; margin-bottom: 20px;">
@@ -227,6 +247,7 @@ function showVerificationCodePrompt(customerEmail, orderId) {
             <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 15px; text-align: center;">
                 Code gültig für 10 Minuten. Überprüf auch deinen Spam-Ordner!
             </p>
+            ${appState.testVerificationCode ? `<p style="color: var(--gold-light); font-size: 12px; margin-top: 10px; text-align: center; background: rgba(255,215,0,0.1); padding: 8px; border-radius: 4px;"><strong>Test-Code für Entwicklung: ${appState.testVerificationCode}</strong></p>` : ''}
         </div>
     `;
 
@@ -290,6 +311,15 @@ function showSuccessMessage(orderId, customerEmail) {
             <span class="emoji">✨</span>
             <div style="font-size: 20px; margin-bottom: 15px; color: var(--gold-light);">
                 <strong>Bestellung wurde freigegeben!</strong>
+            </div>
+            
+            <div style="background: rgba(212, 175, 55, 0.1); border-left: 4px solid var(--gold); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="color: var(--gold-light); font-weight: bold; margin-bottom: 10px;">⏱️ Wichtig:</p>
+                <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
+                    Deine Bestellung wird innerhalb von <strong>24h bis 48h</strong> überprüft. 
+                    Bitte schau in deine Email rein und warte auf weitere Details. 
+                    Du erhältst von uns den <strong>Einladungslink zur Telegram-Gruppe</strong>!
+                </p>
             </div>
             
             <div class="order-details">
