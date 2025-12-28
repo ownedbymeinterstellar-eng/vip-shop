@@ -169,7 +169,7 @@ const sendVerificationEmail = async (email, code, orderId) => {
   }
 };
 
-// 1. POST /order - Bestellung erstellen und Verifikationscode senden
+// 1. POST /order - Erstelle TEMP Order und sende Verification Code (NICHT in DB!)
 app.post('/order', async (req, res) => {
   try {
     const { product_name, payment_method, code, telegram_username, customer_email } = req.body;
@@ -214,47 +214,35 @@ app.post('/order', async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Erstelle neue Bestellung mit Status 'pending_verification'
-    const orderId = uuidv4();
-    const now = new Date().toISOString();
-
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert([{
-        id: orderId,
-        product_name,
-        payment_method: payment_method.toLowerCase(),
-        code,
-        telegram_username: telegram_username.trim(),
-        customer_email: customer_email.trim(),
-        status: 'pending_verification',
-        created_at: now,
-        updated_at: now
-      }])
-      .select();
-
-    if (orderError) {
-      if (orderError.message && orderError.message.includes('unique')) {
-        return res.status(409).json({ 
-          error: 'Code already used' 
-        });
-      }
-      console.error('DB Error:', orderError);
-      return res.status(500).json({ error: 'Database error' });
+    if (existingCode) {
+      return res.status(409).json({ 
+        error: 'Code already used' 
+      });
     }
 
-    // Generate and store verification code
+    // Generate Order ID and verification code
+    const orderId = uuidv4();
     const verificationCode = generateVerificationCode();
+    
+    // Store temporary order info (NOT in database yet!)
     verificationCodeStore[customer_email.trim()] = {
       code: verificationCode,
       expiresAt: Date.now() + (10 * 60 * 1000), // 10 minutes
-      orderId: orderId
+      orderId: orderId,
+      product_name: product_name,
+      payment_method: payment_method.toLowerCase(),
+      code: code,
+      telegram_username: telegram_username.trim(),
+      customer_email: customer_email.trim()
     };
+
+    console.log(`[Order] Temporary order created for ${customer_email.trim()}: ${orderId}`);
+    console.log(`[Order] Verification code: ${verificationCode}`);
 
     // Send verification email
     try {
       await sendInitialOrderEmail(customer_email.trim(), orderId, product_name);
-      console.log(`[Order] Verification code sent to ${customer_email.trim()}: ${verificationCode}`);
+      console.log(`[Order] Verification email sent to ${customer_email.trim()}`);
     } catch (emailError) {
       console.error('Warning: Could not send verification email:', emailError);
     }
@@ -262,7 +250,8 @@ app.post('/order', async (req, res) => {
     res.status(201).json({
       success: true,
       order_id: orderId,
-      message: 'Order created. Verification code sent to your email.',
+      message: `Order created. Verification code sent to your email. (Test code: ${verificationCode})`,
+      verification_code: verificationCode, // For development/testing only
       status: 'pending_verification'
     });
 
@@ -272,7 +261,7 @@ app.post('/order', async (req, res) => {
   }
 });
 
-// 1.5 POST /verify-code - Verifikationscode überprüfen
+// 1.5 POST /verify-code - Verifikationscode überprüfen und Order in DB speichern
 app.post('/verify-code', async (req, res) => {
   try {
     const { customer_email, verification_code } = req.body;
@@ -304,19 +293,31 @@ app.post('/verify-code', async (req, res) => {
       });
     }
 
-    // Code is valid - update order status to 'pending'
+    // Code is valid! Now save the order to database with status 'pending'
     const orderId = storedData.orderId;
     const now = new Date().toISOString();
 
-    const { error: updateError } = await supabase
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .update({ status: 'pending', updated_at: now })
-      .eq('id', orderId);
+      .insert([{
+        id: orderId,
+        product_name: storedData.product_name,
+        payment_method: storedData.payment_method,
+        code: storedData.code,
+        telegram_username: storedData.telegram_username,
+        customer_email: storedData.customer_email,
+        status: 'pending',
+        created_at: now,
+        updated_at: now
+      }])
+      .select();
 
-    if (updateError) {
-      console.error('DB Error:', updateError);
-      return res.status(500).json({ error: 'Database error' });
+    if (orderError) {
+      console.error('DB Error:', orderError);
+      return res.status(500).json({ error: 'Database error while saving order' });
     }
+
+    console.log(`[Verify] Order verified and saved to database: ${orderId}`);
 
     // Clean up verification code
     delete verificationCodeStore[customer_email.trim()];
@@ -324,7 +325,7 @@ app.post('/verify-code', async (req, res) => {
     res.json({
       success: true,
       order_id: orderId,
-      message: 'Email verified successfully. Order is now pending.',
+      message: 'Email verified successfully. Order saved and pending approval.',
       status: 'pending'
     });
 
