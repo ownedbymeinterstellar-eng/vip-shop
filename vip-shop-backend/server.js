@@ -16,19 +16,6 @@ import {
 } from './email-service.js';
 
 const app = express();
-
-// Simple CORS middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-secret');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
 const PORT = process.env.PORT || 3000;
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
@@ -654,4 +641,3 @@ const startServer = async () => {
 };
 
 startServer();
-
