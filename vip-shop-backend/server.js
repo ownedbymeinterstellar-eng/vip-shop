@@ -377,6 +377,9 @@ app.post('/admin/approve/:id', async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
+    // Send approval email
+    await sendApprovalEmail(order.customer_email, id);
+
     console.log(`[Admin] Order ${id} approved`);
 
     res.json({ success: true, message: 'Order approved' });
@@ -399,6 +402,16 @@ app.post('/admin/reject/:id', async (req, res) => {
 
     const now = new Date().toISOString();
 
+    const { data: order, error: getError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (getError || !order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
     const { error } = await supabase
       .from('orders')
       .update({ status: 'rejected', rejection_reason: reason, updated_at: now })
@@ -407,6 +420,9 @@ app.post('/admin/reject/:id', async (req, res) => {
     if (error) {
       return res.status(500).json({ error: 'Database error' });
     }
+
+    // Send rejection email
+    await sendRejectionEmail(order.customer_email, id, reason);
 
     console.log(`[Admin] Order ${id} rejected`);
 
