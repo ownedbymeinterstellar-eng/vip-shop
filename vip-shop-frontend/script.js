@@ -137,44 +137,29 @@ async function proceedWithOrder(productName, paymentMethod, code1, code2, custom
         // Combine codes - if code2 exists, combine them with |, otherwise just use code1
         const finalCode = code2 ? code1 + '|' + code2 : code1;
 
-        const response = await fetch(`${API_BASE_URL}/order`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                product_name: productName,
-                payment_method: paymentMethod,
-                code: finalCode,
-                telegram_username: customerEmail,
-                customer_email: customerEmail
-            })
-        });
+        // Store order data for later submission (after code verification)
+        appState.currentOrderData = {
+            product_name: productName,
+            payment_method: paymentMethod,
+            code: finalCode,
+            customer_email: customerEmail
+        };
 
-        const data = await response.json();
+        console.log('Order data stored for verification:', appState.currentOrderData);
 
-        console.log('Order response:', response.status, data);
-
-        if (!response.ok) {
-            setFormLoading(false);
-            throw new Error(data.error || 'Fehler beim Erstellen der Bestellung');
-        }
-
-        console.log('Order created successfully:', data.order_id);
+        // Generate a temporary order ID for the verification prompt
+        const tempOrderId = 'pending-' + Math.random().toString(36).substr(2, 9);
 
         // Store pending order info for verification
-        appState.pendingOrderId = data.order_id;
+        appState.pendingOrderId = tempOrderId;
         appState.pendingEmail = customerEmail;
 
-        // Store test code if provided (for development)
-        if (data.verification_code) {
-            appState.testVerificationCode = data.verification_code;
-            console.log('Test verification code:', data.verification_code);
-        }
+        // Generate test verification code for display
+        appState.testVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
         // Show verification code prompt
-        console.log('Showing verification prompt for:', customerEmail, data.order_id);
-        showVerificationCodePrompt(customerEmail, data.order_id);
+        console.log('Showing verification prompt for:', customerEmail);
+        showVerificationCodePrompt(customerEmail, tempOrderId);
         setFormLoading(false);
 
     } catch (error) {
@@ -270,7 +255,15 @@ async function verifyCode(customerEmail, orderId) {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/verify-code`, {
+        // Get the stored order data from verification code store
+        const orderData = appState.currentOrderData;
+        
+        if (!orderData) {
+            throw new Error('Bestellungsdaten nicht gefunden');
+        }
+
+        // Verify code first
+        const verifyResponse = await fetch(`${API_BASE_URL}/verify-code`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -281,14 +274,35 @@ async function verifyCode(customerEmail, orderId) {
             })
         });
 
-        const data = await response.json();
+        const verifyData = await verifyResponse.json();
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Fehler bei der Verifizierung');
+        if (!verifyResponse.ok) {
+            throw new Error(verifyData.error || 'Fehler bei der Verifizierung');
+        }
+
+        // Code is valid! NOW submit the actual order
+        const orderResponse = await fetch(`${API_BASE_URL}/order`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                product_name: orderData.product_name,
+                payment_method: orderData.payment_method,
+                code: orderData.code,
+                telegram_username: orderData.customer_email,
+                customer_email: orderData.customer_email
+            })
+        });
+
+        const orderDataResponse = await orderResponse.json();
+
+        if (!orderResponse.ok) {
+            throw new Error(orderDataResponse.error || 'Fehler beim Speichern der Bestellung');
         }
 
         // Success - show success message
-        showSuccessMessage(orderId, customerEmail);
+        showSuccessMessage(orderDataResponse.order_id, customerEmail);
 
     } catch (error) {
         console.error('Error:', error);
