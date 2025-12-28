@@ -226,7 +226,13 @@ const sendRejectionEmail = async (email, orderId, reason) => {
             <p style="color: #333; margin: 0;">${reason || 'Keine Details angegeben'}</p>
           </div>
           
-          <p>Falls du Fragen hast, kontaktiere uns gerne.</p>
+          <p style="margin-top: 20px; font-size: 14px;">Falls du Fragen hast oder mehr Informationen benötigst, kontaktiere uns gerne auf Telegram:</p>
+          
+          <p style="text-align: center; margin: 20px 0;">
+            <a href="https://t.me/Leonax3" style="display: inline-block; background-color: #0088cc; color: white; padding: 12px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
+              💬 Kontaktiere uns auf Telegram
+            </a>
+          </p>
           
           <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
           <p style="color: #999; font-size: 12px; text-align: center;">
