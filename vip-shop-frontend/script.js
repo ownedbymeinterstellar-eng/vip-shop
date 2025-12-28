@@ -83,14 +83,31 @@ async function submitOrder(e) {
         return;
     }
 
-    if (code1.length < 5) {
-        showToast('Code 1 ist zu kurz', 'error');
-        return;
-    }
-
-    if (code2 && code2.length < 5) {
-        showToast('Code 2 ist zu kurz', 'error');
-        return;
+    // Validate code format based on payment method
+    if (paymentMethod === 'paysafecard') {
+        // Paysafecard format: XXXX-XXXX-XXXX-XXXX (16 digits, 4 groups of 4)
+        const paysafecardRegex = /^\d{4}-\d{4}-\d{4}-\d{4}$/;
+        if (!paysafecardRegex.test(code1)) {
+            showToast('Ungültiges Paysafecard-Format. Erwartet: 1234-5678-9012-3456', 'error');
+            return;
+        }
+        
+        if (code2 && !paysafecardRegex.test(code2)) {
+            showToast('Ungültiges Paysafecard-Format für Code 2. Erwartet: 1234-5678-9012-3456', 'error');
+            return;
+        }
+    } else if (paymentMethod === 'cryptovoucher') {
+        // Cryptovoucher format: Alphanumeric, 28-32 characters
+        const cryptovoucherRegex = /^[A-Z0-9]{28,32}$/;
+        if (!cryptovoucherRegex.test(code1)) {
+            showToast('Ungültiges Cryptovoucher-Format. Erwartet: 28-32 Zeichen (Buchstaben und Zahlen)', 'error');
+            return;
+        }
+        
+        if (code2 && !cryptovoucherRegex.test(code2)) {
+            showToast('Ungültiges Cryptovoucher-Format für Code 2. Erwartet: 28-32 Zeichen', 'error');
+            return;
+        }
     }
 
     if (!customerEmail) {
