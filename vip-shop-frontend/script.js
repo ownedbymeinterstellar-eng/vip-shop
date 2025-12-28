@@ -137,29 +137,40 @@ async function proceedWithOrder(productName, paymentMethod, code1, code2, custom
         // Combine codes - if code2 exists, combine them with |, otherwise just use code1
         const finalCode = code2 ? code1 + '|' + code2 : code1;
 
-        // Store order data for later submission (after code verification)
-        appState.currentOrderData = {
-            product_name: productName,
-            payment_method: paymentMethod,
-            code: finalCode,
-            customer_email: customerEmail
-        };
+        console.log('Submitting order to backend...');
 
-        console.log('Order data stored for verification:', appState.currentOrderData);
+        // DIRECTLY submit the order to backend
+        const response = await fetch(`${API_BASE_URL}/order`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                product_name: productName,
+                payment_method: paymentMethod,
+                code: finalCode,
+                telegram_username: customerEmail,
+                customer_email: customerEmail
+            })
+        });
 
-        // Generate a temporary order ID for the verification prompt
-        const tempOrderId = 'pending-' + Math.random().toString(36).substr(2, 9);
+        const data = await response.json();
 
-        // Store pending order info for verification
-        appState.pendingOrderId = tempOrderId;
+        console.log('Order response:', response.status, data);
+
+        if (!response.ok) {
+            setFormLoading(false);
+            throw new Error(data.error || 'Fehler beim Erstellen der Bestellung');
+        }
+
+        console.log('Order created successfully:', data.order_id);
+
+        // Store order info
+        appState.pendingOrderId = data.order_id;
         appState.pendingEmail = customerEmail;
 
-        // Generate test verification code for display
-        appState.testVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // Show verification code prompt
-        console.log('Showing verification prompt for:', customerEmail);
-        showVerificationCodePrompt(customerEmail, tempOrderId);
+        // Show success message immediately
+        showSuccessMessage(data.order_id, customerEmail);
         setFormLoading(false);
 
     } catch (error) {
@@ -184,131 +195,6 @@ function setFormLoading(loading) {
     }
 }
 
-// Show verification code input prompt
-function showVerificationCodePrompt(customerEmail, orderId) {
-    const messageBox = document.getElementById('messageBox');
-    const form = document.getElementById('buyForm');
-
-    console.log('messageBox element:', messageBox);
-    console.log('form element:', form);
-
-    if (!messageBox) {
-        console.error('messageBox element not found!');
-        return;
-    }
-
-    // Hide form and show verification prompt
-    form.style.display = 'none';
-    messageBox.style.display = 'block';
-
-    console.log('Setting messageBox HTML...');
-    messageBox.innerHTML = `
-        <div class="verification-prompt">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <span style="font-size: 40px;">📧</span>
-                <h2 style="color: var(--gold-light); margin: 10px 0;">Email-Verifizierung erforderlich</h2>
-                <p style="color: var(--text-secondary);">Wir haben einen Verifikationscode an</p>
-                <p style="color: var(--gold-light); font-weight: bold;">${customerEmail}</p>
-                <p style="color: var(--text-secondary);">gesendet. Bitte gib den Code ein:</p>
-            </div>
-
-            <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <input type="text" 
-                    id="verificationCode" 
-                    placeholder="000000" 
-                    maxlength="6"
-                    style="width: 100%; padding: 12px; font-size: 20px; text-align: center; letter-spacing: 5px; border: 2px solid var(--gold-light); border-radius: 4px; background: rgba(0,0,0,0.3); color: var(--gold-light);">
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn" onclick="verifyCode('${customerEmail}', '${orderId}')" style="flex: 1;">
-                    ✓ Code überprüfen
-                </button>
-                <button class="btn" onclick="backToShop()" style="flex: 1; background: rgba(255,215,0,0.2);">
-                    ← Abbrechen
-                </button>
-            </div>
-
-            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 15px; text-align: center;">
-                Code gültig für 10 Minuten. Überprüf auch deinen Spam-Ordner!
-            </p>
-            ${appState.testVerificationCode ? `<p style="color: var(--gold-light); font-size: 12px; margin-top: 10px; text-align: center; background: rgba(255,215,0,0.1); padding: 8px; border-radius: 4px;"><strong>Test-Code für Entwicklung: ${appState.testVerificationCode}</strong></p>` : ''}
-        </div>
-    `;
-
-    // Focus on input
-    setTimeout(() => {
-        document.getElementById('verificationCode').focus();
-    }, 100);
-
-    // Scroll to prompt
-    messageBox.scrollIntoView({ behavior: 'smooth' });
-}
-
-// Verify code
-async function verifyCode(customerEmail, orderId) {
-    const verificationCode = document.getElementById('verificationCode').value.trim();
-
-    if (!verificationCode || verificationCode.length !== 6) {
-        showToast('Bitte gib einen gültigen 6-stelligen Code ein', 'error');
-        return;
-    }
-
-    try {
-        // Get the stored order data from verification code store
-        const orderData = appState.currentOrderData;
-        
-        if (!orderData) {
-            throw new Error('Bestellungsdaten nicht gefunden');
-        }
-
-        // Verify code first
-        const verifyResponse = await fetch(`${API_BASE_URL}/verify-code`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                customer_email: customerEmail,
-                verification_code: verificationCode
-            })
-        });
-
-        const verifyData = await verifyResponse.json();
-
-        if (!verifyResponse.ok) {
-            throw new Error(verifyData.error || 'Fehler bei der Verifizierung');
-        }
-
-        // Code is valid! NOW submit the actual order
-        const orderResponse = await fetch(`${API_BASE_URL}/order`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                product_name: orderData.product_name,
-                payment_method: orderData.payment_method,
-                code: orderData.code,
-                telegram_username: orderData.customer_email,
-                customer_email: orderData.customer_email
-            })
-        });
-
-        const orderDataResponse = await orderResponse.json();
-
-        if (!orderResponse.ok) {
-            throw new Error(orderDataResponse.error || 'Fehler beim Speichern der Bestellung');
-        }
-
-        // Success - show success message
-        showSuccessMessage(orderDataResponse.order_id, customerEmail);
-
-    } catch (error) {
-        console.error('Error:', error);
-        showToast(error.message || 'Verifizierung fehlgeschlagen', 'error');
-    }
-}
 
 function showSuccessMessage(orderId, customerEmail) {
     const messageBox = document.getElementById('messageBox');
