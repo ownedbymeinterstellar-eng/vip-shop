@@ -158,6 +158,18 @@ export async function sendApprovalEmail(customerEmail, orderId, productName) {
         Klicke auf den Button oben, um direkt zur Gruppe zu gelangen und deinen VIP-Zugang zu aktivieren.
       </p>
       
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+      
+      <p style="margin-top: 20px; font-size: 14px; text-align: center; color: #666;">
+        <strong>Hast du Fragen oder Probleme?</strong>
+      </p>
+      
+      <p style="text-align: center; margin: 15px 0;">
+        <a href="https://t.me/Leonax3" style="display: inline-block; background-color: #0088cc; color: white; padding: 12px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
+          💬 Kontaktiere uns auf Telegram
+        </a>
+      </p>
+      
       <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
         VIP Shop – Deine Premium Community
       </p>
