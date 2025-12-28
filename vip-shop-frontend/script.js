@@ -1,11 +1,11 @@
 const API_BASE_URL =
     (window.location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://api.vipshop.cloud';
 
-const RECAPTCHA_SITE_KEY = '6LczUTksAAAAAJz_ZXM7q4gOz6kwE1mEd4Y_2L1C';
-
 const appState = {
     currentProduct: null,
-    isLoading: false
+    isLoading: false,
+    pendingOrderId: null,
+    pendingEmail: null
 };
 
 // ==================== PRODUCT SELECTION ====================
@@ -122,46 +122,15 @@ async function submitOrder(e) {
         return;
     }
 
-    // Generate reCAPTCHA token FIRST
-    let recaptchaToken = 'test-token-localhost'; // Default für localhost
-    
-    // Nur auf Production reCAPTCHA verwenden
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        // Check if reCAPTCHA is loaded
-        if (typeof grecaptcha === 'undefined') {
-            console.error('reCAPTCHA not loaded');
-            showToast('Sicherheitssystem wird noch geladen. Bitte warte kurz und versuche erneut.', 'error');
-            return;
-        }
-
-        try {
-            console.log('Generating reCAPTCHA token...');
-            recaptchaToken = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submitOrder' });
-            console.log('reCAPTCHA token generated successfully');
-        } catch (error) {
-            console.error('reCAPTCHA error:', error);
-            showToast('Sicherheitsüberprüfung fehlgeschlagen: ' + error.message, 'error');
-            return;
-        }
-    } else {
-        console.log('Localhost detected - using test token for reCAPTCHA');
-    }
-    
-    try {
-        
-        // Then show confirmation modal with the token
-        showConfirmationModal(productName, paymentMethod, customerEmail, recaptchaToken, () => {
-            // User confirmed - proceed with order
-            proceedWithOrder(productName, paymentMethod, code1, code2, customerEmail, recaptchaToken);
-        });
-    } catch (error) {
-        console.error('reCAPTCHA error:', error);
-        showToast('Sicherheitsüberprüfung fehlgeschlagen: ' + error.message, 'error');
-    }
+    // Show confirmation modal
+    showConfirmationModal(productName, paymentMethod, customerEmail, () => {
+        // User confirmed - proceed with order
+        proceedWithOrder(productName, paymentMethod, code1, code2, customerEmail);
+    });
 }
 
 // Proceed with order submission
-async function proceedWithOrder(productName, paymentMethod, code1, code2, customerEmail, recaptchaToken) {
+async function proceedWithOrder(productName, paymentMethod, code1, code2, customerEmail) {
     setFormLoading(true);
 
     try {
@@ -178,8 +147,7 @@ async function proceedWithOrder(productName, paymentMethod, code1, code2, custom
                 payment_method: paymentMethod,
                 code: finalCode,
                 telegram_username: customerEmail,
-                customer_email: customerEmail,
-                recaptcha_token: recaptchaToken
+                customer_email: customerEmail
             })
         });
 
@@ -190,9 +158,13 @@ async function proceedWithOrder(productName, paymentMethod, code1, code2, custom
             throw new Error(data.error || 'Fehler beim Erstellen der Bestellung');
         }
 
-        // Success - show success message before resetting form loading state
-        showSuccessMessage(data.order_id, customerEmail);
-        // Don't call setFormLoading(false) here as the form is already hidden
+        // Store pending order info for verification
+        appState.pendingOrderId = data.order_id;
+        appState.pendingEmail = customerEmail;
+
+        // Show verification code prompt
+        showVerificationCodePrompt(customerEmail, data.order_id);
+        setFormLoading(false);
 
     } catch (error) {
         console.error('Error:', error);
@@ -213,6 +185,93 @@ function setFormLoading(loading) {
     } else {
         btn.disabled = false;
         btn.textContent = '✓ Bestätigen & Beitreten';
+    }
+}
+
+// Show verification code input prompt
+function showVerificationCodePrompt(customerEmail, orderId) {
+    const messageBox = document.getElementById('messageBox');
+    const form = document.getElementById('buyForm');
+
+    // Hide form and show verification prompt
+    form.style.display = 'none';
+    messageBox.style.display = 'block';
+
+    messageBox.innerHTML = `
+        <div class="verification-prompt">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 40px;">📧</span>
+                <h2 style="color: var(--gold-light); margin: 10px 0;">Email-Verifizierung erforderlich</h2>
+                <p style="color: var(--text-secondary);">Wir haben einen Verifikationscode an</p>
+                <p style="color: var(--gold-light); font-weight: bold;">${customerEmail}</p>
+                <p style="color: var(--text-secondary);">gesendet. Bitte gib den Code ein:</p>
+            </div>
+
+            <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <input type="text" 
+                    id="verificationCode" 
+                    placeholder="000000" 
+                    maxlength="6"
+                    style="width: 100%; padding: 12px; font-size: 20px; text-align: center; letter-spacing: 5px; border: 2px solid var(--gold-light); border-radius: 4px; background: rgba(0,0,0,0.3); color: var(--gold-light);">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="verifyCode('${customerEmail}', '${orderId}')" style="flex: 1;">
+                    ✓ Code überprüfen
+                </button>
+                <button class="btn" onclick="backToShop()" style="flex: 1; background: rgba(255,215,0,0.2);">
+                    ← Abbrechen
+                </button>
+            </div>
+
+            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 15px; text-align: center;">
+                Code gültig für 10 Minuten. Überprüf auch deinen Spam-Ordner!
+            </p>
+        </div>
+    `;
+
+    // Focus on input
+    setTimeout(() => {
+        document.getElementById('verificationCode').focus();
+    }, 100);
+
+    // Scroll to prompt
+    messageBox.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Verify code
+async function verifyCode(customerEmail, orderId) {
+    const verificationCode = document.getElementById('verificationCode').value.trim();
+
+    if (!verificationCode || verificationCode.length !== 6) {
+        showToast('Bitte gib einen gültigen 6-stelligen Code ein', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/verify-code`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_email: customerEmail,
+                verification_code: verificationCode
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Fehler bei der Verifizierung');
+        }
+
+        // Success - show success message
+        showSuccessMessage(orderId, customerEmail);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(error.message || 'Verifizierung fehlgeschlagen', 'error');
     }
 }
 
@@ -418,7 +477,7 @@ class CursorTracker {
 
 // ==================== CONFIRMATION MODAL ====================
 
-function showConfirmationModal(productName, paymentMethod, email, recaptchaToken, onConfirm) {
+function showConfirmationModal(productName, paymentMethod, email, onConfirm) {
     const modal = document.getElementById('confirmationModal');
     
     // Fill in the modal details
