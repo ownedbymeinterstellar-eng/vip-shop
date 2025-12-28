@@ -5,7 +5,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 require('dotenv').config();
 
-// Dynamisches Laden der Konfiguration (wird bei jedem Aufruf neu gepr++ft)
+// Dynamisches Laden der Konfiguration (wird bei jedem Aufruf neu gepr√ºft)
 function getEmailConfig() {
   const user = process.env.EMAIL_USER;
   const password = process.env.EMAIL_PASSWORD;
@@ -22,17 +22,17 @@ function getEmailConfig() {
 // Log email configuration status at startup
 const initialConfig = getEmailConfig();
 if (!initialConfig.user || !initialConfig.password) {
-  console.warn('‘‹·¥©≈ Email Service: Missing credentials (EMAIL_USER or EMAIL_PASSWORD not set)');
+  console.warn('üìß Email Service: Missing credentials (EMAIL_USER or EMAIL_PASSWORD not set)');
   console.warn(`   EMAIL_USER: ${initialConfig.user ? 'SET' : 'NOT SET'}`);
   console.warn(`   EMAIL_PASSWORD: ${initialConfig.password ? 'SET' : 'NOT SET'}`);
 } else {
-  console.log('‘£Ù Email Service: Configured and ready');
+  console.log('‚úÖ Email Service: Configured and ready');
   console.log(`   EMAIL_USER: ${initialConfig.user}`);
   console.log(`   EMAIL_FROM: ${initialConfig.from}`);
 }
 
 // Konfiguriere Nodemailer
-// F++r Gmail: https://myaccount.google.com/apppasswords
+// F√ºr Gmail: https://myaccount.google.com/apppasswords
 function createTransporter() {
   const config = getEmailConfig();
   return nodemailer.createTransport({
@@ -53,7 +53,7 @@ export async function sendEmail(to, subject, html) {
     const config = getEmailConfig();
     
     if (!config.user || !config.password) {
-      console.warn('‘‹·¥©≈ Email not configured - skipping email send to', to);
+      console.warn('üìß Email not configured - skipping email send to', to);
       console.warn('   Make sure EMAIL_USER and EMAIL_PASSWORD are set in environment variables');
       return false;
     }
@@ -65,13 +65,13 @@ export async function sendEmail(to, subject, html) {
       html
     };
 
-    console.log(`≠ÉÙ∫ Sending email to ${to} with subject: "${subject}"`);
+    console.log(`üì® Sending email to ${to} with subject: "${subject}"`);
     const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
-    console.log(`‘£Ù Email successfully sent to ${to}:`, info.messageId);
+    console.log(`‚úÖ Email successfully sent to ${to}:`, info.messageId);
     return true;
   } catch (error) {
-    console.error(`‘ÿÓ Error sending email to ${to}:`);
+    console.error(`‚ùå Error sending email to ${to}:`);
     console.error(`   Subject: ${subject}`);
     console.error(`   Error: ${error.message}`);
     if (error.code) console.error(`   Code: ${error.code}`);
@@ -82,22 +82,22 @@ export async function sendEmail(to, subject, html) {
 // ==================== INITIAL ORDER EMAIL ====================
 
 export async function sendInitialOrderEmail(customerEmail, orderId, productName) {
-  const subject = '≠ÉÙÔ Deine Bestellung wurde erhalten - VIP Shop';
+  const subject = 'üì¶ Deine Bestellung wurde erhalten - VIP Shop';
   
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #00d4ff;">≠É¯Ï¥©≈ Deine Bestellung wurde erhalten!</h2>
+      <h2 style="color: #00d4ff;">üì¨ Deine Bestellung wurde erhalten!</h2>
       
       <p>Hallo,</p>
       
-      <p>vielen Dank f++r deine Bestellung bei VIP Shop! Wir freuen uns auf dich.</p>
+      <p>vielen Dank f√ºr deine Bestellung bei VIP Shop! Wir freuen uns auf dich.</p>
       
       <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
         <p><strong>Bestellungs-ID:</strong> <code>${orderId}</code></p>
         <p><strong>Produkt:</strong> ${productName}</p>
       </div>
       
-      <p style="color: #666;">‘≈¶ Deine Bestellung wird gerade ++berpr++ft. Du erh+Òltst eine Benachrichtigung per Email, sobald deine Bestellung genehmigt wurde.</p>
+      <p style="color: #666;">‚è≥ Deine Bestellung wird gerade √ºberpr√ºft. Du erh√§ltst eine Benachrichtigung per Email, sobald deine Bestellung genehmigt wurde.</p>
       
       <p style="color: #888; font-size: 12px; margin-top: 30px;">
         Wenn du diese Bestellung nicht aufgegeben hast, ignoriere diese Email bitte.
@@ -105,7 +105,7 @@ export async function sendInitialOrderEmail(customerEmail, orderId, productName)
       
       <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
       <p style="color: #999; font-size: 12px; text-align: center;">
-        VIP Shop ‘«Û Deine Premium Community
+        VIP Shop ‚Äì Deine Premium Community
       </p>
     </div>
   `;
@@ -116,7 +116,7 @@ export async function sendInitialOrderEmail(customerEmail, orderId, productName)
 // ==================== APPROVAL EMAIL WITH GROUP LINK ====================
 
 export async function sendApprovalEmail(customerEmail, orderId, productName) {
-  const subject = '‘£‡ Deine Bestellung wurde genehmigt! - VIP Shop';
+  const subject = '‚úÖ Deine Bestellung wurde genehmigt! - VIP Shop';
   
   const groupLinks = {
     'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
@@ -124,41 +124,42 @@ export async function sendApprovalEmail(customerEmail, orderId, productName) {
     'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
   };
 
-  const groupLink = groupLinks[productName];
-  const groupName = productName;
+  const groupLink = groupLinks[productName] || '';
+  const groupName = productName || 'VIP';
+
+  if (!groupLink) {
+    console.warn(`‚ö†Ô∏è Warning: No group link found for product: ${productName}`);
+  }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #4CAF50;">‘£‡ Gl++ckwunsch! Deine Bestellung wurde genehmigt!</h2>
+      <h2 style="color: #4CAF50;">‚úÖ Gl√ºckwunsch! Deine Bestellung wurde genehmigt!</h2>
       
       <p>Hallo,</p>
       
-      <p>gro+Éartig! Deine Bestellung wurde ++berpr++ft und genehmigt. ≠ÉƒÎ</p>
+      <p>gro√üartig! Deine Bestellung wurde √ºberpr√ºft und genehmigt. üéâ</p>
       
       <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
         <p><strong>Bestellungs-ID:</strong> <code>${orderId}</code></p>
         <p><strong>Produkt:</strong> ${groupName}</p>
       </div>
       
-      <p style="margin: 25px 0;">
-        <strong>≠Éˆ˘ Tritt jetzt unserer VIP Gruppe bei:</strong>
+      <p style="margin: 25px 0; text-align: center;">
+        <strong>üîó Dein exklusiver Zugang zur VIP-Gruppe:</strong>
       </p>
       
       <p style="text-align: center; margin: 20px 0;">
-        <a href="${groupLink}" style="display: inline-block; background-color: #0088cc; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Zur ${groupName} Gruppe
+        <a href="${groupLink}" style="display: inline-block; background-color: #0088cc; color: white; padding: 14px 32px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+          ‚ûî Zur ${groupName} Gruppe beitreten
         </a>
       </p>
       
-      <p>Du wirst in der Gruppe alle weiteren Informationen und deinen Code erhalten.</p>
-      
-      <p style="color: #666; margin-top: 30px; font-size: 14px;">
-        Danke, dass du Teil unserer VIP Community bist! ≠É‹«
+      <p style="color: #666; text-align: center; margin-top: 20px; line-height: 1.6;">
+        Klicke auf den Button oben, um direkt zur Gruppe zu gelangen und deinen VIP-Zugang zu aktivieren.
       </p>
       
-      <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
-      <p style="color: #999; font-size: 12px; text-align: center;">
-        VIP Shop ‘«Û Deine Premium Community
+      <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
+        VIP Shop ‚Äì Deine Premium Community
       </p>
     </div>
   `;
@@ -169,11 +170,11 @@ export async function sendApprovalEmail(customerEmail, orderId, productName) {
 // ==================== REJECTION EMAIL WITH REASON ====================
 
 export async function sendRejectionEmail(customerEmail, orderId, productName, reason) {
-  const subject = '‘ÿÓ Update zu deiner Bestellung - VIP Shop';
+  const subject = '‚ö†Ô∏è Update zu deiner Bestellung - VIP Shop';
   
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #FF6B6B;">‘ÿÓ Update zu deiner Bestellung</h2>
+      <h2 style="color: #FF6B6B;">‚ö†Ô∏è Update zu deiner Bestellung</h2>
       
       <p>Hallo,</p>
       
@@ -189,7 +190,7 @@ export async function sendRejectionEmail(customerEmail, orderId, productName, re
       <p>Falls du Fragen hast, kontaktiere uns gerne.</p>
       
       <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
-        VIP Shop ‘«Û Deine Premium Community
+        VIP Shop ‚Äì Deine Premium Community
       </p>
     </div>
   `;
@@ -200,7 +201,7 @@ export async function sendRejectionEmail(customerEmail, orderId, productName, re
 // ==================== COMPLETION EMAIL WITH CODE ====================
 
 export async function sendCompletionEmail(customerEmail, orderId, productName, code) {
-  const subject = '≠Éƒ¸ Dein Code ist bereit! - VIP Shop';
+  const subject = 'üéÅ Dein Code ist bereit! - VIP Shop';
   
   const groupLinks = {
     'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
@@ -212,11 +213,11 @@ export async function sendCompletionEmail(customerEmail, orderId, productName, c
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #4CAF50;">≠Éƒ¸ Dein Code ist bereit!</h2>
+      <h2 style="color: #4CAF50;">üéÅ Dein Code ist bereit!</h2>
       
       <p>Hallo,</p>
       
-      <p>perfekt! Dein Code f++r dein VIP-Zugang ist jetzt bereit.</p>
+      <p>perfekt! Dein Code f√ºr dein VIP-Zugang ist jetzt bereit.</p>
       
       <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
         <p><strong>Bestellungs-ID:</strong> <code>${orderId}</code></p>
@@ -224,14 +225,14 @@ export async function sendCompletionEmail(customerEmail, orderId, productName, c
       </div>
       
       <div style="background-color: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #4CAF50; text-align: center;">
-        <p style="color: #666; margin: 0 0 10px 0;">Dein pers+¬nlicher Code:</p>
+        <p style="color: #666; margin: 0 0 10px 0;">Dein pers√∂nlicher Code:</p>
         <p style="font-size: 28px; font-weight: bold; color: #2e7d32; font-family: monospace; margin: 0; letter-spacing: 2px;">
           ${code}
         </p>
       </div>
       
-      <p style="margin: 25px 0;">
-        <strong>≠Éˆ˘ Tritt jetzt unserer VIP Gruppe bei:</strong>
+      <p style="margin: 25px 0; text-align: center;">
+        <strong>üîó Tritt jetzt unserer VIP Gruppe bei:</strong>
       </p>
       
       <p style="text-align: center; margin: 20px 0;">
@@ -241,12 +242,12 @@ export async function sendCompletionEmail(customerEmail, orderId, productName, c
       </p>
       
       <p style="color: #666; margin-top: 20px; font-size: 14px;">
-        Nutze deinen Code beim Login in der Gruppe. Willkommen im VIP-Kreis! ≠É‹«
+        Nutze deinen Code beim Login in der Gruppe. Willkommen im VIP-Kreis! üôè
       </p>
       
       <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
       <p style="color: #999; font-size: 12px; text-align: center;">
-        VIP Shop ‘«Û Deine Premium Community
+        VIP Shop ‚Äì Deine Premium Community
       </p>
     </div>
   `;

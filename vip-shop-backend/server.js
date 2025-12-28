@@ -117,13 +117,22 @@ const sendVerificationEmail = async (email, code, orderId) => {
   }
 };
 
-const sendApprovalEmail = async (email, orderId) => {
+const sendApprovalEmail = async (email, orderId, productName, code) => {
   if (!resend) {
     console.log(`[Email] Approval email for ${email}: Order ${orderId}`);
     return true;
   }
 
   try {
+    const groupLinks = {
+      'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
+      'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
+      'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
+    };
+
+    const groupLink = groupLinks[productName] || groupLinks['Silber'];
+    const groupName = productName || 'VIP';
+
     const response = await resend.emails.send({
       from: 'VIP Shop <noreply@vipshop.cloud>',
       to: email,
@@ -136,12 +145,34 @@ const sendApprovalEmail = async (email, orderId) => {
           
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; border: 2px solid #4CAF50;">
             <p><strong>Bestellungs-ID:</strong> <code>${orderId}</code></p>
-            <p style="margin: 0;">Du erhältst deinen Code und weitere Informationen in Kürze!</p>
+            <p><strong>Package:</strong> ${groupName}</p>
           </div>
           
-          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-          <p style="color: #999; font-size: 12px; text-align: center;">
-            VIP Shop • Deine Premium Community
+          <p style="margin: 25px 0; text-align: center;">
+            <strong>🔗 Dein exklusiver Zugang zur VIP-Gruppe:</strong>
+          </p>
+          
+          <p style="text-align: center; margin: 20px 0;">
+            <a href="${groupLink}" style="display: inline-block; background-color: #0088cc; color: white; padding: 14px 32px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+              ➔ Zur ${groupName} Gruppe beitreten
+            </a>
+          </p>
+          
+          <p style="color: #666; text-align: center; margin-top: 20px; line-height: 1.6;">
+            Klicke auf den Button oben, um direkt zur Gruppe zu gelangen und deinen VIP-Zugang zu aktivieren.
+          </p>
+
+          ${code ? `
+          <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; border: 2px solid #4CAF50; text-align: center;">
+            <p style="color: #666; margin: 0 0 10px 0;">Dein persönlicher Code:</p>
+            <p style="font-size: 20px; font-weight: bold; color: #2e7d32; font-family: monospace; margin: 0; letter-spacing: 2px;">
+              ${code}
+            </p>
+          </div>
+          ` : ''}
+          
+          <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
+            VIP Shop – Deine Premium Community
           </p>
         </div>
       `
@@ -247,19 +278,79 @@ app.post('/order', async (req, res) => {
       return res.status(409).json({ error: 'Code already used' });
     }
 
-    // Create order
+    // Generate and store verification code (NO ORDER IN DB YET!)
+    const verificationCode = generateVerificationCode();
     const orderId = uuidv4();
+    
+    verificationCodeStore[customer_email.trim()] = {
+      code: verificationCode,
+      expiresAt: Date.now() + (10 * 60 * 1000),
+      orderId: orderId,
+      product_name: product_name,
+      payment_method: payment_method.toLowerCase(),
+      paymentCode: code,
+      telegram_username: telegram_username.trim()
+    };
+
+    console.log(`[Order] Verification code generated: ${verificationCode} for ${customer_email}`);
+
+    // Send verification email
+    await sendVerificationEmail(customer_email.trim(), verificationCode, orderId);
+
+    res.status(201).json({
+      success: true,
+      order_id: orderId,
+      message: 'Verification code will be sent to your email.',
+      status: 'pending'
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 2. POST /verify-code - Verify email code and create order
+app.post('/verify-code', async (req, res) => {
+  try {
+    const { email, verification_code } = req.body;
+
+    if (!email || !verification_code) {
+      return res.status(400).json({ error: 'Email and verification code required' });
+    }
+
+    const trimmedEmail = email.trim();
+    const codeData = verificationCodeStore[trimmedEmail];
+
+    // Check if code exists
+    if (!codeData) {
+      return res.status(400).json({ error: 'No verification code found for this email' });
+    }
+
+    // Check if code expired
+    if (Date.now() > codeData.expiresAt) {
+      delete verificationCodeStore[trimmedEmail];
+      return res.status(400).json({ error: 'Verification code expired' });
+    }
+
+    // Check if code matches
+    if (codeData.code !== verification_code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+
+    // Code is valid - NOW create the order
+    const orderId = codeData.orderId;
     const now = new Date().toISOString();
 
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert([{
         id: orderId,
-        product_name,
-        payment_method: payment_method.toLowerCase(),
-        code,
-        telegram_username: telegram_username.trim(),
-        customer_email: customer_email.trim(),
+        product_name: codeData.product_name,
+        payment_method: codeData.payment_method,
+        code: codeData.paymentCode,
+        telegram_username: codeData.telegram_username,
+        customer_email: trimmedEmail,
         status: 'pending',
         created_at: now,
         updated_at: now
@@ -271,23 +362,15 @@ app.post('/order', async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Generate and store verification code
-    const verificationCode = generateVerificationCode();
-    verificationCodeStore[customer_email.trim()] = {
-      code: verificationCode,
-      expiresAt: Date.now() + (10 * 60 * 1000),
-      orderId: orderId
-    };
+    // Clean up verification code
+    delete verificationCodeStore[trimmedEmail];
 
-    console.log(`[Order] Created: ${orderId}, Email: ${customer_email}, Code: ${verificationCode}`);
+    console.log(`[Order] Created after verification: ${orderId}, Email: ${trimmedEmail}`);
 
-    // Send verification email
-    await sendVerificationEmail(customer_email.trim(), verificationCode, orderId);
-
-    res.status(201).json({
+    res.json({
       success: true,
       order_id: orderId,
-      message: 'Order created. Verification code will be sent to your email.',
+      message: 'Order verified and created',
       status: 'pending'
     });
 
@@ -297,7 +380,7 @@ app.post('/order', async (req, res) => {
   }
 });
 
-// 2. GET /order/:id - Get order status
+// 3. GET /order/:id - Get order status
 app.get('/order/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -319,7 +402,7 @@ app.get('/order/:id', async (req, res) => {
   }
 });
 
-// 3. GET /admin/orders - Get all orders (requires admin secret)
+// 4. GET /admin/orders - Get all orders (requires admin secret)
 app.get('/admin/orders', async (req, res) => {
   try {
     const adminSecret = req.headers['x-admin-secret'];
@@ -345,7 +428,7 @@ app.get('/admin/orders', async (req, res) => {
   }
 });
 
-// 4. POST /admin/approve/:id - Approve order
+// 5. POST /admin/approve/:id - Approve order
 app.post('/admin/approve/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -377,8 +460,8 @@ app.post('/admin/approve/:id', async (req, res) => {
       return res.status(500).json({ error: 'Database error' });
     }
 
-    // Send approval email
-    await sendApprovalEmail(order.customer_email, id);
+    // Send approval email with code if provided
+    await sendApprovalEmail(order.customer_email, id, order.product_name, code);
 
     console.log(`[Admin] Order ${id} approved`);
 
@@ -389,7 +472,7 @@ app.post('/admin/approve/:id', async (req, res) => {
   }
 });
 
-// 5. POST /admin/reject/:id - Reject order
+// 6. POST /admin/reject/:id - Reject order
 app.post('/admin/reject/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -433,7 +516,7 @@ app.post('/admin/reject/:id', async (req, res) => {
   }
 });
 
-// 6. POST /admin/finish/:id - Complete order and send code
+// 7. POST /admin/finish/:id - Complete order and send code
 app.post('/admin/finish/:id', async (req, res) => {
   try {
     const { id } = req.params;

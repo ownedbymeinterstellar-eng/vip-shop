@@ -254,11 +254,37 @@ async function verifyCode(customerEmail, orderId) {
         return;
     }
 
-    // Code is valid - show success message
-    showSuccessMessage(orderId, customerEmail);
+    // Send verification code to backend
+    try {
+        const response = await fetch(`${API_BASE_URL}/verify-code`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: customerEmail,
+                verification_code: verificationCode
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast(data.error || 'Code-Verifizierung fehlgeschlagen', 'error');
+            return;
+        }
+
+        console.log('Order verified successfully:', data.order_id);
+        
+        // Code is valid - show success message with invite link
+        showSuccessMessage(orderId, customerEmail, data.order_id);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(error.message || 'Fehler bei der Code-Verifizierung', 'error');
+    }
 }
 
-function showSuccessMessage(orderId, customerEmail) {
+function showSuccessMessage(orderId, customerEmail, verifiedOrderId) {
     const messageBox = document.getElementById('messageBox');
     const form = document.getElementById('buyForm');
     const paymentInstructions = document.getElementById('paymentInstructions');
@@ -266,36 +292,55 @@ function showSuccessMessage(orderId, customerEmail) {
     // Hide form and show success message
     form.style.display = 'none';
     messageBox.style.display = 'block';
-    paymentInstructions.style.display = 'block';
+    paymentInstructions.style.display = 'none';
+
+    // Get the product name from the form to determine the invite link
+    const productSelect = document.getElementById('productSelect');
+    const productValue = productSelect.value;
+    const productName = productValue ? productValue.split('|')[0] : 'Silber';
+
+    // Map product names to invite links
+    const inviteLinks = {
+        'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
+        'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
+        'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
+    };
+
+    const inviteLink = inviteLinks[productName] || inviteLinks['Silber'];
 
     messageBox.innerHTML = `
         <div class="success-message">
             <span class="emoji">✨</span>
             <div style="font-size: 20px; margin-bottom: 15px; color: var(--gold-light);">
-                <strong>Bestellung wurde freigegeben!</strong>
+                <strong>Bestellung erfolgreich! 🎉</strong>
             </div>
             
-            <div style="background: rgba(212, 175, 55, 0.1); border-left: 4px solid var(--gold); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="color: var(--gold-light); font-weight: bold; margin-bottom: 10px;">⏱️ Wichtig:</p>
+            <div style="background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4CAF50; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="color: #4CAF50; font-weight: bold; margin-bottom: 10px;">✓ Zahlung verifiziert</p>
                 <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
-                    Deine Bestellung wird innerhalb von <strong>24h bis 48h</strong> überprüft. 
-                    Bitte schau in deine Email rein und warte auf weitere Details. 
-                    Du erhältst von uns den <strong>Einladungslink zur Telegram-Gruppe</strong>!
+                    Deine Zahlung wurde erfolgreich verifiziert. Du erhältst in Kürze Zugang zur VIP-Gruppe!
                 </p>
             </div>
             
             <div class="order-details">
                 <p><strong>Bestellungs-ID:</strong></p>
-                <p class="order-id">${orderId}</p>
+                <p class="order-id">${verifiedOrderId || orderId}</p>
                 
                 <p style="margin-top: 15px;"><strong>E-Mail:</strong></p>
                 <p style="color: var(--text-secondary);">${customerEmail}</p>
                 
                 <p style="margin-top: 20px; color: var(--text-secondary);">
-                    📧 Schau in deine Email rein und warte auf weitere Details.
+                    📧 Schau in deine Email rein für weitere Details.
                 </p>
-                <p style="color: var(--text-tertiary); font-size: 13px; margin-top: 10px;">
-                    Du erhältst den Einladungslink zur Telegram-Gruppe nach Genehmigung durch unser Team.
+            </div>
+
+            <div style="background: rgba(212, 175, 55, 0.1); border-left: 4px solid var(--gold); padding: 20px; border-radius: 8px; margin-top: 20px;">
+                <p style="color: var(--gold-light); font-weight: bold; margin-bottom: 15px;">🔗 Dein exklusiver Zugang:</p>
+                <a href="${inviteLink}" target="_blank" style="display: inline-block; background-color: #0088cc; color: white; padding: 14px 32px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                    ➔ Zur ${productName} Gruppe beitreten
+                </a>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 15px;">
+                    Klicke auf den Button, um direkt zur Telegram-Gruppe zu gelangen.
                 </p>
             </div>
         </div>
