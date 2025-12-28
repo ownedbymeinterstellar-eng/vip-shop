@@ -3,6 +3,7 @@ import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
+import { Resend } from 'resend';
 
 dotenv.config();
 
@@ -13,6 +14,9 @@ const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 // Check required variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -65,6 +69,51 @@ const verificationCodeStore = {};
 
 const generateVerificationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const sendVerificationEmail = async (email, code, orderId) => {
+  if (!resend) {
+    console.log(`[Email] Verification code for ${email}: ${code} (Resend not configured)`);
+    return true;
+  }
+
+  try {
+    const response = await resend.emails.send({
+      from: 'VIP Shop <noreply@vipshop.cloud>',
+      to: email,
+      subject: '🔐 Dein Verifikationscode - VIP Shop',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #d4af37;">🔐 Dein Verifikationscode</h2>
+          <p>Hallo,</p>
+          <p>vielen Dank für deine Bestellung! Um diese zu bestätigen, verwende bitte folgenden Code:</p>
+          
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <p style="font-size: 28px; font-weight: bold; color: #d4af37; font-family: monospace; letter-spacing: 5px; margin: 0;">
+              ${code}
+            </p>
+          </div>
+          
+          <p>Dieser Code ist <strong>10 Minuten</strong> lang gültig.</p>
+          
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">
+            Wenn du diese Bestellung nicht aufgegeben hast, ignoriere diese Email bitte.
+          </p>
+        </div>
+      `
+    });
+
+    if (response.error) {
+      console.error(`[Email Error] Failed to send to ${email}:`, response.error);
+      return false;
+    }
+
+    console.log(`[Email] Verification code sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`[Email Error] Exception:`, error);
+    return false;
+  }
 };
 
 // ==================== ORDER ROUTES ====================
@@ -142,11 +191,13 @@ app.post('/order', async (req, res) => {
 
     console.log(`[Order] Created: ${orderId}, Email: ${customer_email}, Code: ${verificationCode}`);
 
+    // Send verification email
+    await sendVerificationEmail(customer_email.trim(), verificationCode, orderId);
+
     res.status(201).json({
       success: true,
       order_id: orderId,
       message: 'Order created. Verification code will be sent to your email.',
-      verification_code: verificationCode,
       status: 'pending'
     });
 
