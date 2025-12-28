@@ -126,7 +126,7 @@ const sendApprovalEmail = async (email, orderId, productName, code) => {
   try {
     const groupLinks = {
       'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
-      'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
+      'Gold': 'https://t.me/+TihK9xDZPTQ5ZTg0',
       'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
     };
 

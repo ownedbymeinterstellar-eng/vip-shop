@@ -120,7 +120,7 @@ export async function sendApprovalEmail(customerEmail, orderId, productName) {
   
   const groupLinks = {
     'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
-    'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
+    'Gold': 'https://t.me/+TihK9xDZPTQ5ZTg0',
     'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
   };
 
@@ -205,7 +205,7 @@ export async function sendCompletionEmail(customerEmail, orderId, productName, c
   
   const groupLinks = {
     'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
-    'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
+    'Gold': 'https://t.me/+TihK9xDZPTQ5ZTg0',
     'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
   };
 

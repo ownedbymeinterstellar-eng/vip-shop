@@ -294,19 +294,10 @@ function showSuccessMessage(orderId, customerEmail, verifiedOrderId) {
     messageBox.style.display = 'block';
     paymentInstructions.style.display = 'none';
 
-    // Get the product name from the form to determine the invite link
+    // Get the product name from the form
     const productSelect = document.getElementById('productSelect');
     const productValue = productSelect.value;
     const productName = productValue ? productValue.split('|')[0] : 'Silber';
-
-    // Map product names to invite links
-    const inviteLinks = {
-        'Silber': 'https://t.me/+EwQE5eaiAwg5OGRk',
-        'Gold': 'https://t.me/+eyPpy6JPWKNiYjNk',
-        'Platinum': 'https://t.me/+ISTJI8IR6TtmY2Y0'
-    };
-
-    const inviteLink = inviteLinks[productName] || inviteLinks['Silber'];
 
     messageBox.innerHTML = `
         <div class="success-message">
@@ -335,12 +326,9 @@ function showSuccessMessage(orderId, customerEmail, verifiedOrderId) {
             </div>
 
             <div style="background: rgba(212, 175, 55, 0.1); border-left: 4px solid var(--gold); padding: 20px; border-radius: 8px; margin-top: 20px;">
-                <p style="color: var(--gold-light); font-weight: bold; margin-bottom: 15px;">🔗 Dein exklusiver Zugang:</p>
-                <a href="${inviteLink}" target="_blank" style="display: inline-block; background-color: #0088cc; color: white; padding: 14px 32px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
-                    ➔ Zur ${productName} Gruppe beitreten
-                </a>
-                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 15px;">
-                    Klicke auf den Button, um direkt zur Telegram-Gruppe zu gelangen.
+                <p style="color: var(--gold-light); font-weight: bold; margin-bottom: 15px;">✉️ Nächste Schritte:</p>
+                <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
+                    Überprüfe deine Email! Du erhältst in Kürze eine Bestätigungsemail mit deinem persönlichen Link zur VIP-Gruppe.
                 </p>
             </div>
         </div>
