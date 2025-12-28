@@ -1,7 +1,7 @@
 const API_BASE_URL =
     (window.location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://api.vipshop.cloud';
 
-const RECAPTCHA_SITE_KEY = '6LclTjksAAAAAAgjChVmU-e9nTLYVFIKQn_LgMBP';
+const RECAPTCHA_SITE_KEY = '6LcspTgsAAAAALKJxXU1QPKKYqGxi_KHObsxVlvO';
 
 const appState = {
     currentProduct: null,
