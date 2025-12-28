@@ -1,4 +1,4 @@
-// WICHTIG: dotenv MUSS mit require geladen werden, damit config() vor den ES6 Imports ausgef++hrt wird
+ï»¿// WICHTIG: dotenv MUSS mit require geladen werden, damit config() vor den ES6 Imports ausgef++hrt wird
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 require('dotenv').config();
@@ -25,31 +25,32 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('ÔØî Fehler: SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY m++ssen gesetzt sein!');
+  console.error('ï¿½ï¿½ï¿½ Fehler: SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY m++ssen gesetzt sein!');
   process.exit(1);
 }
 
 if (!RECAPTCHA_SECRET_KEY) {
-  console.error('ÔØî Fehler: RECAPTCHA_SECRET_KEY muss gesetzt sein!');
+  console.error('ï¿½ï¿½ï¿½ Fehler: RECAPTCHA_SECRET_KEY muss gesetzt sein!');
   process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:8000', 'http://localhost:3000', 'http://127.0.0.1:8000', 'http://127.0.0.1:3000', 'https://vip-shop-jade.vercel.app', 'https://vipshop.cloud'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-admin-secret']
-}));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-secret');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
 app.use(express.json());
 
 // ==================== DATABASE INITIALIZATION ====================
 
 const initializeDatabase = async () => {
   try {
-    // +£berpr++fe ob Tabellen existieren, erstelle sie falls nicht
+    // +ï¿½berpr++fe ob Tabellen existieren, erstelle sie falls nicht
     
     // Tabelle: orders
     const { error: ordersError } = await supabase.from('orders').select('count', { count: 'exact', head: true });
@@ -92,7 +93,7 @@ const initializeDatabase = async () => {
       }).catch(() => ({ error: null })); // RPC might not exist, that's ok
     }
 
-    console.log('Ô£ô Supabase Datenbank initialisiert');
+    console.log('Ô£ï¿½ Supabase Datenbank initialisiert');
   } catch (error) {
     console.error('Fehler beim Initialisieren der Datenbank:', error);
     throw error;
@@ -108,11 +109,11 @@ const authenticateAdmin = (req, res, next) => {
   console.log('[DEBUG Auth] Match:', adminSecret === ADMIN_SECRET);
   
   if (!adminSecret || adminSecret !== ADMIN_SECRET) {
-    console.log('[DEBUG Auth] ÔØî Authentication failed');
+    console.log('[DEBUG Auth] ï¿½ï¿½ï¿½ Authentication failed');
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  console.log('[DEBUG Auth] Ô£ô Authentication successful');
+  console.log('[DEBUG Auth] Ô£ï¿½ Authentication successful');
   next();
 };
 
@@ -576,7 +577,7 @@ app.post('/admin/test-email', authenticateAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Email address required' });
     }
 
-    console.log(`\n­ƒº¬ Testing email send to: ${email}`);
+    console.log(`\nï¿½ï¿½ï¿½ï¿½ Testing email send to: ${email}`);
 
     let success = false;
 
@@ -617,13 +618,13 @@ const startServer = async () => {
     
     app.listen(PORT, () => {
       console.log(`
-ÔòöÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòù
-Ôòæ    VIP SHOP BACKEND - ONLINE       Ôòæ
-ÔòáÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòú
-Ôòæ Server l+ñuft auf Port ${PORT}         Ôòæ
-Ôòæ Datenbank: Supabase                Ôòæ
-Ôòæ Mode: ${process.env.NODE_ENV}        Ôòæ
-ÔòÜÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòØ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½    VIP SHOP BACKEND - ONLINE       ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ Server l+ï¿½uft auf Port ${PORT}         ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ Datenbank: Supabase                ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ Mode: ${process.env.NODE_ENV}        ï¿½ï¿½ï¿½
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
       `);
       console.log('Verf++gbare Endpoints:');
       console.log('  POST   /order');
@@ -641,3 +642,4 @@ const startServer = async () => {
 };
 
 startServer();
+
