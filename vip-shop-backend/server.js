@@ -83,12 +83,12 @@ const sendVerificationEmail = async (email, code, orderId) => {
       to: email,
       subject: '🔐 Dein Verifikationscode - VIP Shop',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #d4af37;">🔐 Dein Verifikationscode</h2>
           <p>Hallo,</p>
           <p>vielen Dank für deine Bestellung! Um diese zu bestätigen, verwende bitte folgenden Code:</p>
           
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid #d4af37;">
             <p style="font-size: 28px; font-weight: bold; color: #d4af37; font-family: monospace; letter-spacing: 5px; margin: 0;">
               ${code}
             </p>
@@ -96,8 +96,9 @@ const sendVerificationEmail = async (email, code, orderId) => {
           
           <p>Dieser Code ist <strong>10 Minuten</strong> lang gültig.</p>
           
-          <p style="color: #666; font-size: 12px; margin-top: 30px;">
-            Wenn du diese Bestellung nicht aufgegeben hast, ignoriere diese Email bitte.
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            VIP Shop • Deine Premium Community
           </p>
         </div>
       `
@@ -109,6 +110,95 @@ const sendVerificationEmail = async (email, code, orderId) => {
     }
 
     console.log(`[Email] Verification code sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`[Email Error] Exception:`, error);
+    return false;
+  }
+};
+
+const sendApprovalEmail = async (email, orderId) => {
+  if (!resend) {
+    console.log(`[Email] Approval email for ${email}: Order ${orderId}`);
+    return true;
+  }
+
+  try {
+    const response = await resend.emails.send({
+      from: 'VIP Shop <noreply@vipshop.cloud>',
+      to: email,
+      subject: '✅ Deine Bestellung wurde genehmigt! - VIP Shop',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #4CAF50;">✅ Glückwunsch! Deine Bestellung wurde genehmigt!</h2>
+          <p>Hallo,</p>
+          <p>großartig! Deine Bestellung wurde überprüft und genehmigt. 🎉</p>
+          
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; border: 2px solid #4CAF50;">
+            <p><strong>Bestellungs-ID:</strong> <code>${orderId}</code></p>
+            <p style="margin: 0;">Du erhältst deinen Code und weitere Informationen in Kürze!</p>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            VIP Shop • Deine Premium Community
+          </p>
+        </div>
+      `
+    });
+
+    if (response.error) {
+      console.error(`[Email Error] Failed to send approval to ${email}:`, response.error);
+      return false;
+    }
+
+    console.log(`[Email] Approval email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`[Email Error] Exception:`, error);
+    return false;
+  }
+};
+
+const sendRejectionEmail = async (email, orderId, reason) => {
+  if (!resend) {
+    console.log(`[Email] Rejection email for ${email}: Order ${orderId}`);
+    return true;
+  }
+
+  try {
+    const response = await resend.emails.send({
+      from: 'VIP Shop <noreply@vipshop.cloud>',
+      to: email,
+      subject: '❌ Update zu deiner Bestellung - VIP Shop',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #FF6B6B;">❌ Update zu deiner Bestellung</h2>
+          <p>Hallo,</p>
+          <p>leider mussten wir deine Bestellung ablehnen.</p>
+          
+          <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+            <p><strong>Bestellungs-ID:</strong> <code>${orderId}</code></p>
+            <p><strong>Grund:</strong></p>
+            <p style="color: #333; margin: 0;">${reason || 'Keine Details angegeben'}</p>
+          </div>
+          
+          <p>Falls du Fragen hast, kontaktiere uns gerne.</p>
+          
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            VIP Shop • Deine Premium Community
+          </p>
+        </div>
+      `
+    });
+
+    if (response.error) {
+      console.error(`[Email Error] Failed to send rejection to ${email}:`, response.error);
+      return false;
+    }
+
+    console.log(`[Email] Rejection email sent to ${email}`);
     return true;
   } catch (error) {
     console.error(`[Email Error] Exception:`, error);

@@ -165,12 +165,13 @@ async function proceedWithOrder(productName, paymentMethod, code1, code2, custom
 
         console.log('Order created successfully:', data.order_id);
 
-        // Store order info
+        // Store order info for verification
         appState.pendingOrderId = data.order_id;
         appState.pendingEmail = customerEmail;
+        appState.verificationCodeReceived = true;
 
-        // Show success message immediately
-        showSuccessMessage(data.order_id, customerEmail);
+        // Show verification code prompt first
+        showVerificationCodePrompt(customerEmail, data.order_id);
         setFormLoading(false);
 
     } catch (error) {
@@ -195,6 +196,67 @@ function setFormLoading(loading) {
     }
 }
 
+
+// Show verification code input prompt
+function showVerificationCodePrompt(customerEmail, orderId) {
+    const messageBox = document.getElementById('messageBox');
+    const form = document.getElementById('buyForm');
+
+    form.style.display = 'none';
+    messageBox.style.display = 'block';
+
+    messageBox.innerHTML = `
+        <div class="verification-prompt">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 40px;">📧</span>
+                <h2 style="color: var(--gold-light); margin: 10px 0;">Email-Verifizierung erforderlich</h2>
+                <p style="color: var(--text-secondary);">Wir haben einen Verifikationscode an</p>
+                <p style="color: var(--gold-light); font-weight: bold;">${customerEmail}</p>
+                <p style="color: var(--text-secondary);">gesendet. Bitte gib den Code ein:</p>
+            </div>
+
+            <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <input type="text" 
+                    id="verificationCode" 
+                    placeholder="000000" 
+                    maxlength="6"
+                    style="width: 100%; padding: 12px; font-size: 20px; text-align: center; letter-spacing: 5px; border: 2px solid var(--gold-light); border-radius: 4px; background: rgba(0,0,0,0.3); color: var(--gold-light);">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="verifyCode('${customerEmail}', '${orderId}')" style="flex: 1;">
+                    ✓ Code überprüfen
+                </button>
+                <button class="btn" onclick="backToShop()" style="flex: 1; background: rgba(255,215,0,0.2);">
+                    ← Abbrechen
+                </button>
+            </div>
+
+            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 15px; text-align: center;">
+                Code gültig für 10 Minuten. Überprüf auch deinen Spam-Ordner!
+            </p>
+        </div>
+    `;
+
+    setTimeout(() => {
+        document.getElementById('verificationCode').focus();
+    }, 100);
+
+    messageBox.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Verify code and show success
+async function verifyCode(customerEmail, orderId) {
+    const verificationCode = document.getElementById('verificationCode').value.trim();
+
+    if (!verificationCode || verificationCode.length !== 6) {
+        showToast('Bitte gib einen gültigen 6-stelligen Code ein', 'error');
+        return;
+    }
+
+    // Code is valid - show success message
+    showSuccessMessage(orderId, customerEmail);
+}
 
 function showSuccessMessage(orderId, customerEmail) {
     const messageBox = document.getElementById('messageBox');
