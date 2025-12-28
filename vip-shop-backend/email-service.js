@@ -1,80 +1,51 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { createRequire } from 'module';
 
-// Lade dotenv direkt in diesem Modul
+// Lade dotenv
 const require = createRequire(import.meta.url);
 require('dotenv').config();
 
-// Dynamisches Laden der Konfiguration (wird bei jedem Aufruf neu geprüft)
-function getEmailConfig() {
-  const user = process.env.EMAIL_USER;
-  const password = process.env.EMAIL_PASSWORD;
-  const from = process.env.EMAIL_FROM || user;
-  
-  console.log('[DEBUG] getEmailConfig called:');
-  console.log('  EMAIL_USER from process.env:', user);
-  console.log('  EMAIL_PASSWORD exists:', !!password);
-  console.log('  EMAIL_FROM from process.env:', from);
-  
-  return { user, password, from };
-}
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Log email configuration status at startup
-const initialConfig = getEmailConfig();
-if (!initialConfig.user || !initialConfig.password) {
-  console.warn('⚠️ Email Service: Missing credentials (EMAIL_USER or EMAIL_PASSWORD not set)');
-  console.warn(`   EMAIL_USER: ${initialConfig.user ? 'SET' : 'NOT SET'}`);
-  console.warn(`   EMAIL_PASSWORD: ${initialConfig.password ? 'SET' : 'NOT SET'}`);
+if (!process.env.RESEND_API_KEY) {
+  console.warn('⚠️ Email Service: Missing Resend API Key (RESEND_API_KEY not set)');
 } else {
-  console.log('✓ Email Service: Configured and ready');
-  console.log(`   EMAIL_USER: ${initialConfig.user}`);
-  console.log(`   EMAIL_FROM: ${initialConfig.from}`);
-}
-
-// Konfiguriere Nodemailer
-// Für Gmail: https://myaccount.google.com/apppasswords
-function createTransporter() {
-  const config = getEmailConfig();
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_SECURE === 'true',
-    auth: {
-      user: config.user,
-      pass: config.password
-    }
-  });
+  console.log('✓ Email Service: Resend configured and ready');
+  console.log(`   RESEND_API_KEY: SET`);
 }
 
 // ==================== SEND EMAIL ====================
 
 export async function sendEmail(to, subject, html) {
   try {
-    const config = getEmailConfig();
-    
-    if (!config.user || !config.password) {
+    if (!process.env.RESEND_API_KEY) {
       console.warn('⚠️ Email not configured - skipping email send to', to);
-      console.warn('   Make sure EMAIL_USER and EMAIL_PASSWORD are set in environment variables');
+      console.warn('   Make sure RESEND_API_KEY is set in environment variables');
       return false;
     }
 
-    const mailOptions = {
-      from: config.from,
-      to,
-      subject,
-      html
-    };
-
     console.log(`📧 Sending email to ${to} with subject: "${subject}"`);
-    const transporter = createTransporter();
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✓ Email successfully sent to ${to}:`, info.messageId);
+    
+    const result = await resend.emails.send({
+      from: 'VIP Shop <noreply@vipshop.cloud>',
+      to: to,
+      subject: subject,
+      html: html
+    });
+
+    if (result.error) {
+      console.error(`❌ Error sending email to ${to}:`, result.error);
+      return false;
+    }
+
+    console.log(`✓ Email successfully sent to ${to}:`, result.data.id);
     return true;
   } catch (error) {
     console.error(`❌ Error sending email to ${to}:`);
     console.error(`   Subject: ${subject}`);
     console.error(`   Error: ${error.message}`);
-    if (error.code) console.error(`   Code: ${error.code}`);
     return false;
   }
 }
@@ -86,7 +57,7 @@ export async function sendInitialOrderEmail(customerEmail, orderId, productName)
   
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #00d4ff;">🛍️ Deine Bestellung wurde erhalten!</h2>
+      <h2 style="color: #d4af37;">🛍️ Deine Bestellung wurde erhalten!</h2>
       
       <p>Hallo,</p>
       
