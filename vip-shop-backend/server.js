@@ -231,7 +231,7 @@ app.post('/order', async (req, res) => {
       orderId: orderId,
       product_name: product_name,
       payment_method: payment_method.toLowerCase(),
-      code: code,
+      payment_code: code,
       telegram_username: telegram_username.trim(),
       customer_email: customer_email.trim()
     };
@@ -303,7 +303,7 @@ app.post('/verify-code', async (req, res) => {
         id: orderId,
         product_name: storedData.product_name,
         payment_method: storedData.payment_method,
-        code: storedData.code,
+        code: storedData.payment_code,
         telegram_username: storedData.telegram_username,
         customer_email: storedData.customer_email,
         status: 'pending',
