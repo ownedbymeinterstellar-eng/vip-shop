@@ -5,8 +5,77 @@ const appState = {
     currentProduct: null,
     isLoading: false,
     pendingOrderId: null,
-    pendingEmail: null
+    pendingEmail: null,
+    serverOnline: true
 };
+
+// ==================== SERVER STATUS CHECK ====================
+
+async function checkServerStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/health`, {
+            method: 'GET',
+            timeout: 5000
+        });
+        
+        if (response.ok) {
+            appState.serverOnline = true;
+            updateServerStatusUI(true);
+            return true;
+        } else {
+            appState.serverOnline = false;
+            updateServerStatusUI(false);
+            return false;
+        }
+    } catch (error) {
+        appState.serverOnline = false;
+        updateServerStatusUI(false);
+        return false;
+    }
+}
+
+function updateServerStatusUI(isOnline) {
+    const statusContainer = document.getElementById('serverStatus');
+    if (!statusContainer) return;
+    
+    if (isOnline) {
+        statusContainer.innerHTML = `
+            <div style="background: rgba(76, 175, 80, 0.1); border-left: 4px solid #4CAF50; padding: 12px 15px; border-radius: 6px; display: flex; align-items: center; gap: 10px;">
+                <span style="width: 10px; height: 10px; background: #4CAF50; border-radius: 50%; display: inline-block; animation: pulse-green 2s infinite;"></span>
+                <span style="color: #4CAF50; font-size: 14px; font-weight: 600;">✓ Server Online - Bestellungen möglich</span>
+            </div>
+        `;
+        // Enable form
+        const buyBtn = document.querySelector('#buyForm button');
+        if (buyBtn) buyBtn.disabled = false;
+    } else {
+        statusContainer.innerHTML = `
+            <div style="background: rgba(255, 107, 107, 0.1); border-left: 4px solid #FF6B6B; padding: 12px 15px; border-radius: 6px; display: flex; align-items: center; gap: 10px;">
+                <span style="width: 10px; height: 10px; background: #FF6B6B; border-radius: 50%; display: inline-block; animation: pulse-red 2s infinite;"></span>
+                <span style="color: #FF6B6B; font-size: 14px; font-weight: 600;">✗ Server Offline - Bestellungen temporär nicht möglich</span>
+            </div>
+        `;
+        // Disable form
+        const buyBtn = document.querySelector('#buyForm button');
+        if (buyBtn) buyBtn.disabled = true;
+    }
+}
+
+// Add CSS animations for status indicator
+function addStatusIndicatorStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse-green {
+            0%, 100% { background: #4CAF50; }
+            50% { background: #45a049; }
+        }
+        @keyframes pulse-red {
+            0%, 100% { background: #FF6B6B; }
+            50% { background: #ff5252; }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 // ==================== PRODUCT SELECTION ====================
 
@@ -134,6 +203,13 @@ async function proceedWithOrder(productName, paymentMethod, code1, code2, custom
     setFormLoading(true);
 
     try {
+        // Check if server is online before submitting order
+        if (!appState.serverOnline) {
+            setFormLoading(false);
+            showToast('❌ Server ist offline - Bestellungen sind momentan nicht möglich. Bitte versuche es später erneut.', 'error');
+            return;
+        }
+
         // Combine codes - if code2 exists, combine them with |, otherwise just use code1
         const finalCode = code2 ? code1 + '|' + code2 : code1;
 
@@ -583,6 +659,15 @@ function addTiltEffect() {
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('VIP Shop loaded successfully');
+    
+    // Add status indicator styles
+    addStatusIndicatorStyles();
+    
+    // Check server status on page load
+    checkServerStatus();
+    
+    // Check server status every 30 seconds
+    setInterval(checkServerStatus, 30000);
     
     // Initialize cursor tracker
     new CursorTracker();
