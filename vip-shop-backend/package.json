@@ -13,10 +13,15 @@
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
     "resend": "^3.0.0",
     "uuid": "^9.0.0"
   },
-  "keywords": ["vip", "shop", "backend"],
+  "keywords": [
+    "vip",
+    "shop",
+    "backend"
+  ],
   "author": "",
   "license": "MIT"
 }

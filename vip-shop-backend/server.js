@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 import { Resend } from 'resend';
+import jwt from 'jsonwebtoken';
+import { adminAuthMiddleware, generateAdminToken } from './admin-auth-middleware.js';
 
 dotenv.config();
 
@@ -14,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
+const JWT_SECRET = process.env.JWT_SECRET || 'jwt-super-secret-key-change-in-production-12345';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
@@ -26,9 +29,10 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 // ==================== CORS CONFIGURATION ====================
 app.use(cors({
-  origin: ['https://vipshop.cloud', 'https://vip-shop-jade.vercel.app', 'http://localhost:8000', 'http://localhost:3000'],
+  origin: ['https://vipshop.cloud', 'https://vip-shop-jade.vercel.app', 'http://localhost:8000', 'http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 app.use(express.json());
@@ -41,6 +45,7 @@ console.log('✓ Resend Email Service konfiguriert');
 
 // ==================== RATE LIMITING ====================
 const rateLimitStore = {};
+const adminLoginAttempts = {};
 
 const checkRateLimit = (ip) => {
   const now = Date.now();
@@ -61,6 +66,34 @@ const checkRateLimit = (ip) => {
   }
   
   rateLimitStore[ip].count++;
+  return { allowed: true };
+};
+
+// Admin login rate limiting (much stricter)
+const checkAdminLoginRateLimit = (ip) => {
+  const now = Date.now();
+  const hour = 60 * 60 * 1000;
+  
+  if (!adminLoginAttempts[ip]) {
+    adminLoginAttempts[ip] = { count: 1, resetTime: now + hour };
+    return { allowed: true };
+  }
+  
+  if (now > adminLoginAttempts[ip].resetTime) {
+    adminLoginAttempts[ip] = { count: 1, resetTime: now + hour };
+    return { allowed: true };
+  }
+  
+  if (adminLoginAttempts[ip].count >= 5) {
+    const remainingTime = Math.ceil((adminLoginAttempts[ip].resetTime - now) / 1000 / 60);
+    return { 
+      allowed: false, 
+      message: `Zu viele Anmeldeversuche. Bitte warten Sie ${remainingTime} Minuten.`,
+      retryAfter: remainingTime
+    };
+  }
+  
+  adminLoginAttempts[ip].count++;
   return { allowed: true };
 };
 
@@ -259,6 +292,59 @@ const sendRejectionEmail = async (email, orderId, reason) => {
   }
 };
 
+// ==================== ADMIN AUTHENTICATION ====================
+
+// 1. POST /api/admin/login - Authenticate and get JWT token
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const { secret } = req.body;
+
+    // Check rate limit FIRST
+    const rateLimitCheck = checkAdminLoginRateLimit(clientIp);
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json({ 
+        error: rateLimitCheck.message,
+        retryAfter: rateLimitCheck.retryAfter
+      });
+    }
+
+    if (!secret || secret.trim().length === 0) {
+      return res.status(400).json({ error: 'Admin secret is required' });
+    }
+
+    // Verify secret
+    if (secret !== ADMIN_SECRET) {
+      return res.status(401).json({ error: 'Invalid admin secret' });
+    }
+
+    // Generate JWT token (valid for 2 minutes)
+    const token = generateAdminToken(JWT_SECRET, '2m');
+    
+    console.log(`[Admin] Login successful from IP: ${clientIp}`);
+
+    res.json({ 
+      success: true, 
+      token: token,
+      expiresIn: '2m',
+      message: 'Authentication successful'
+    });
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 2. GET /api/admin/verify - Verify if token is still valid
+app.get('/api/admin/verify', adminAuthMiddleware(JWT_SECRET), (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Token is valid',
+    expiresIn: '2m'
+  });
+});
+
 // ==================== ORDER ROUTES ====================
 
 // 1. POST /order - Create order and send verification code
@@ -424,15 +510,9 @@ app.get('/order/:id', async (req, res) => {
   }
 });
 
-// 4. GET /admin/orders - Get all orders (requires admin secret)
-app.get('/admin/orders', async (req, res) => {
+// 4. GET /api/admin/orders - Get all orders (requires JWT token)
+app.get('/api/admin/orders', adminAuthMiddleware(JWT_SECRET), async (req, res) => {
   try {
-    const adminSecret = req.headers['x-admin-secret'];
-
-    if (adminSecret !== ADMIN_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const { data: orders, error } = await supabase
       .from('orders')
       .select('*')
@@ -450,16 +530,10 @@ app.get('/admin/orders', async (req, res) => {
   }
 });
 
-// 5. POST /admin/approve/:id - Approve order
-app.post('/admin/approve/:id', async (req, res) => {
+// 5. POST /api/admin/approve/:id - Approve order
+app.post('/api/admin/approve/:id', adminAuthMiddleware(JWT_SECRET), async (req, res) => {
   try {
     const { id } = req.params;
-    const adminSecret = req.headers['x-admin-secret'];
-
-    if (adminSecret !== ADMIN_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const { code } = req.body;
     const now = new Date().toISOString();
 
@@ -494,17 +568,11 @@ app.post('/admin/approve/:id', async (req, res) => {
   }
 });
 
-// 6. POST /admin/reject/:id - Reject order
-app.post('/admin/reject/:id', async (req, res) => {
+// 6. POST /api/admin/reject/:id - Reject order
+app.post('/api/admin/reject/:id', adminAuthMiddleware(JWT_SECRET), async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
-    const adminSecret = req.headers['x-admin-secret'];
-
-    if (adminSecret !== ADMIN_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const now = new Date().toISOString();
 
     const { data: order, error: getError } = await supabase
@@ -538,17 +606,11 @@ app.post('/admin/reject/:id', async (req, res) => {
   }
 });
 
-// 7. POST /admin/finish/:id - Complete order and send code
-app.post('/admin/finish/:id', async (req, res) => {
+// 7. POST /api/admin/finish/:id - Complete order and send code
+app.post('/api/admin/finish/:id', adminAuthMiddleware(JWT_SECRET), async (req, res) => {
   try {
     const { id } = req.params;
     const { code } = req.body;
-    const adminSecret = req.headers['x-admin-secret'];
-
-    if (adminSecret !== ADMIN_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const now = new Date().toISOString();
 
     const { error } = await supabase
