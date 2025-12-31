@@ -298,7 +298,7 @@
                 return;
             }
 
-            let html = '<table class="orders-table"><thead><tr><th>Produkt</th><th>Telegram</th><th>Email</th><th>Status</th><th>Datum</th><th>Aktionen</th></tr></thead><tbody>';
+            let html = '<table class="orders-table"><thead><tr><th>Produkt</th><th>Telegram</th><th>Email</th><th>Code</th><th>Status</th><th>Datum</th><th>Aktionen</th></tr></thead><tbody>';
 
             filtered.forEach(order => {
                 const date = new Date(order.created_at).toLocaleDateString('de-DE');
@@ -306,6 +306,7 @@
                     <td>${order.product_name}</td>
                     <td><strong>${order.telegram_username}</strong></td>
                     <td>${order.customer_email}</td>
+                    <td><code style="font-size: 11px; color: #666; word-break: break-all;">${order.code || '-'}</code></td>
                     <td><span class="status-badge ${order.status}">${order.status}</span></td>
                     <td>${date}</td>
                     <td><div class="action-buttons">${getActionButtons(order)}</div></td>
