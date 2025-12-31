@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
 import { adminAuthMiddleware, generateAdminToken } from './admin-auth-middleware.js';
-import { EncryptionService } from './encryption-service.js';
 
 dotenv.config();
 
@@ -19,7 +18,6 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin123';
 const JWT_SECRET = process.env.JWT_SECRET || 'jwt-super-secret-key-change-in-production-12345';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-change-in-production-minimum-32-characters';
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
@@ -38,16 +36,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// ==================== ENCRYPTION INITIALIZATION ====================
-let encryptionService;
-try {
-  encryptionService = new EncryptionService(ENCRYPTION_KEY);
-  console.log('✓ AES-256 Encryption Service initialisiert');
-} catch (error) {
-  console.error('❌ Encryption Service Error:', error.message);
-  process.exit(1);
-}
 
 // ==================== SUPABASE INITIALIZATION ====================
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -462,19 +450,15 @@ app.post('/verify-code', async (req, res) => {
     const orderId = codeData.orderId;
     const now = new Date().toISOString();
 
-    // Encrypt sensitive data
-    const encryptedCode = encryptionService.encrypt(codeData.paymentCode);
-    const encryptedEmail = encryptionService.encrypt(trimmedEmail);
-
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert([{
         id: orderId,
         product_name: codeData.product_name,
         payment_method: codeData.payment_method,
-        code: encryptedCode,
+        code: codeData.paymentCode,
         telegram_username: codeData.telegram_username,
-        customer_email: encryptedEmail,
+        customer_email: trimmedEmail,
         status: 'pending',
         created_at: now,
         updated_at: now
@@ -546,50 +530,6 @@ app.get('/api/admin/orders', adminAuthMiddleware(JWT_SECRET), async (req, res) =
   }
 });
 
-// 4b. POST /api/admin/decrypt - Decrypt code and email for admin viewing
-app.post('/api/admin/decrypt', adminAuthMiddleware(JWT_SECRET), async (req, res) => {
-  try {
-    const { orderId, code, email } = req.body;
-
-    if (!orderId) {
-      return res.status(400).json({ error: 'Order ID required' });
-    }
-
-    let decryptedCode = null;
-    let decryptedEmail = null;
-
-    // Decrypt code if provided
-    if (code) {
-      try {
-        decryptedCode = encryptionService.decrypt(code);
-      } catch (error) {
-        console.error('Failed to decrypt code:', error);
-        decryptedCode = '[Decryption failed]';
-      }
-    }
-
-    // Decrypt email if provided
-    if (email) {
-      try {
-        decryptedEmail = encryptionService.decrypt(email);
-      } catch (error) {
-        console.error('Failed to decrypt email:', error);
-        decryptedEmail = '[Decryption failed]';
-      }
-    }
-
-    res.json({
-      orderId,
-      code: decryptedCode,
-      email: decryptedEmail,
-      decryptedAt: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // 5. POST /api/admin/approve/:id - Approve order
 app.post('/api/admin/approve/:id', adminAuthMiddleware(JWT_SECRET), async (req, res) => {
   try {
@@ -607,23 +547,9 @@ app.post('/api/admin/approve/:id', adminAuthMiddleware(JWT_SECRET), async (req, 
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // Encrypt new code if provided, otherwise keep existing
-    let finalCode = order.code;
-    if (code) {
-      finalCode = encryptionService.encrypt(code);
-    }
-
-    // Decrypt email for sending
-    let decryptedEmail = order.customer_email;
-    try {
-      decryptedEmail = encryptionService.decrypt(order.customer_email);
-    } catch (error) {
-      console.error('Failed to decrypt email for approval:', error);
-    }
-
     const { error: updateError } = await supabase
       .from('orders')
-      .update({ status: 'approved', code: finalCode, updated_at: now })
+      .update({ status: 'approved', code: code || order.code, updated_at: now })
       .eq('id', id);
 
     if (updateError) {
@@ -631,7 +557,7 @@ app.post('/api/admin/approve/:id', adminAuthMiddleware(JWT_SECRET), async (req, 
     }
 
     // Send approval email with code if provided
-    await sendApprovalEmail(decryptedEmail, id, order.product_name, code);
+    await sendApprovalEmail(order.customer_email, id, order.product_name, code);
 
     console.log(`[Admin] Order ${id} approved`);
 
@@ -659,14 +585,6 @@ app.post('/api/admin/reject/:id', adminAuthMiddleware(JWT_SECRET), async (req, r
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // Decrypt email for sending
-    let decryptedEmail = order.customer_email;
-    try {
-      decryptedEmail = encryptionService.decrypt(order.customer_email);
-    } catch (error) {
-      console.error('Failed to decrypt email for rejection:', error);
-    }
-
     const { error } = await supabase
       .from('orders')
       .update({ status: 'rejected', rejection_reason: reason, updated_at: now })
@@ -677,7 +595,7 @@ app.post('/api/admin/reject/:id', adminAuthMiddleware(JWT_SECRET), async (req, r
     }
 
     // Send rejection email
-    await sendRejectionEmail(decryptedEmail, id, reason);
+    await sendRejectionEmail(order.customer_email, id, reason);
 
     console.log(`[Admin] Order ${id} rejected`);
 
@@ -695,15 +613,9 @@ app.post('/api/admin/finish/:id', adminAuthMiddleware(JWT_SECRET), async (req, r
     const { code } = req.body;
     const now = new Date().toISOString();
 
-    // Encrypt new code if provided
-    let finalCode = code;
-    if (code) {
-      finalCode = encryptionService.encrypt(code);
-    }
-
     const { error } = await supabase
       .from('orders')
-      .update({ status: 'completed', code: finalCode, updated_at: now })
+      .update({ status: 'completed', code: code, updated_at: now })
       .eq('id', id);
 
     if (error) {

@@ -57,8 +57,6 @@
         
         .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
         .action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.3s; color: white; }
-        .action-btn.decrypt { background: #8b5cf6; }
-        .action-btn.decrypt:hover { background: #7c3aed; }
         .action-btn.approve { background: #60a5fa; }
         .action-btn.approve:hover { background: #3b82f6; }
         .action-btn.finish { background: #10b981; }
@@ -300,16 +298,14 @@
                 return;
             }
 
-            let html = '<table class="orders-table"><thead><tr><th>Produkt</th><th>Telegram</th><th>Email</th><th>Code</th><th>Status</th><th>Datum</th><th>Aktionen</th></tr></thead><tbody>';
+            let html = '<table class="orders-table"><thead><tr><th>Produkt</th><th>Telegram</th><th>Email</th><th>Status</th><th>Datum</th><th>Aktionen</th></tr></thead><tbody>';
 
             filtered.forEach(order => {
                 const date = new Date(order.created_at).toLocaleDateString('de-DE');
-                const codeDisplay = order.code ? order.code.substring(0, 20) + '...' : '-';
                 html += `<tr>
                     <td>${order.product_name}</td>
                     <td><strong>${order.telegram_username}</strong></td>
                     <td>${order.customer_email}</td>
-                    <td><code style="font-size: 11px; color: #666;">${codeDisplay}</code></td>
                     <td><span class="status-badge ${order.status}">${order.status}</span></td>
                     <td>${date}</td>
                     <td><div class="action-buttons">${getActionButtons(order)}</div></td>
@@ -322,11 +318,6 @@
 
         function getActionButtons(order) {
             let buttons = '';
-
-            // Always show decrypt button if there's code
-            if (order.code) {
-                buttons += `<button class="action-btn decrypt" onclick="decryptOrder('${order.id}', '${order.code}', '${order.customer_email}')">🔓 Entschlüsseln</button>`;
-            }
 
             if (order.status === 'pending') {
                 buttons += `<button class="action-btn approve" onclick="approveOrder('${order.id}')">Genehmigen</button>`;
@@ -343,44 +334,6 @@
             }
 
             return buttons;
-        }
-
-        async function decryptOrder(orderId, encryptedCode, encryptedEmail) {
-            try {
-                const response = await fetch(API_BASE_URL + '/api/admin/decrypt', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + authToken,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        orderId: orderId,
-                        code: encryptedCode,
-                        email: encryptedEmail
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Show decrypted data in alert or modal
-                    let message = `📋 Entschlüsselte Daten für Bestellung ${orderId}\n\n`;
-                    if (data.code) {
-                        message += `💳 Code: ${data.code}\n`;
-                    }
-                    if (data.email) {
-                        message += `📧 Email: ${data.email}\n`;
-                    }
-                    message += `\n⏱️ Entschlüsselt: ${new Date(data.decryptedAt).toLocaleTimeString('de-DE')}`;
-                    
-                    alert(message);
-                } else {
-                    alert('Fehler beim Entschlüsseln: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Decrypt error:', error);
-                alert('Fehler beim Verbinden zum Server');
-            }
         }
 
         async function approveOrder(orderId) {
