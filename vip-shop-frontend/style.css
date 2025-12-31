@@ -75,6 +75,136 @@ body {
     opacity: 0.8;
 }
 
+/* ==================== NEW YEAR BANNER ==================== */
+
+.newyear-banner {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(255, 215, 0, 0.15) 50%, rgba(212, 175, 55, 0.2) 100%);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    padding: 25px 30px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(212, 175, 55, 0.1);
+    animation: banner-glow 3s ease-in-out infinite;
+}
+
+.newyear-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: banner-shine 3s infinite;
+}
+
+.banner-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    text-align: center;
+}
+
+.banner-icon {
+    font-size: 36px;
+    animation: bounce-icon 2s ease-in-out infinite;
+}
+
+.banner-text h2 {
+    color: var(--gold-light);
+    font-size: 28px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+}
+
+.banner-text p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.banner-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 200px;
+    background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
+    pointer-events: none;
+    animation: glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes banner-glow {
+    0%, 100% {
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(212, 175, 55, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 50px rgba(212, 175, 55, 0.5), inset 0 0 30px rgba(212, 175, 55, 0.2);
+    }
+}
+
+@keyframes banner-shine {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes bounce-icon {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-12px);
+    }
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .newyear-banner {
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .banner-content {
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .banner-text h2 {
+        font-size: 20px;
+    }
+    
+    .banner-text p {
+        font-size: 13px;
+    }
+    
+    .banner-icon {
+        font-size: 28px;
+    }
+}
+
 /* ==================== HEADER ==================== */
 
 header {
@@ -347,9 +477,46 @@ h1 {
     font-size: 32px;
     font-weight: bold;
     margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.price-old {
+    font-size: 20px;
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+    opacity: 0.7;
+}
+
+.price-new {
+    font-size: 36px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: price-pulse 2s ease-in-out infinite;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+}
+
+@keyframes price-pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
+    }
+    50% {
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.6));
+    }
 }
 
 .product-card.silver .product-price {
+    color: var(--silver);
+}
+
+.product-card.silver .price-new {
     color: var(--silver);
 }
 
@@ -357,7 +524,15 @@ h1 {
     color: var(--gold);
 }
 
+.product-card.gold .price-new {
+    color: var(--gold);
+}
+
 .product-card.platinum .product-price {
+    color: var(--platinum);
+}
+
+.product-card.platinum .price-new {
     color: var(--platinum);
 }
 

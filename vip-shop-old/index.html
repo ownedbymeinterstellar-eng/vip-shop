@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Shop - Umleitung</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-section {
+            margin-bottom: 50px;
+        }
+
+        .diamond-container {
+            perspective: 1000px;
+            margin-bottom: 20px;
+            display: inline-block;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .diamond {
+            width: 120px;
+            height: 180px;
+            position: relative;
+            animation: float 4s ease-in-out infinite;
+            transform-style: preserve-3d;
+        }
+
+        /* Top triangle - obere Spitze */
+        .diamond::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 90px solid rgba(100, 200, 255, 0.95);
+            filter: drop-shadow(0 5px 25px rgba(100, 200, 255, 0.9))
+                    drop-shadow(0 10px 40px rgba(100, 200, 255, 0.6))
+                    drop-shadow(inset -5px -5px 20px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Bottom triangle - untere Spitze */
+        .diamond::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-top: 90px solid rgba(100, 200, 255, 0.85);
+            filter: drop-shadow(0 -5px 20px rgba(100, 200, 255, 0.7))
+                    drop-shadow(0 -10px 35px rgba(100, 200, 255, 0.4))
+                    drop-shadow(inset 5px 5px 15px rgba(0, 0, 0, 0.15));
+        }
+
+        /* Linke Facette */
+        .facet-left {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-top: 45px solid transparent;
+            border-right: 60px solid rgba(70, 150, 255, 0.75);
+            border-bottom: 45px solid transparent;
+            left: -60px;
+            top: 45px;
+            filter: drop-shadow(0 5px 15px rgba(100, 200, 255, 0.6));
+        }
+
+        /* Rechte Facette */
+        .facet-right {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-top: 45px solid transparent;
+            border-left: 60px solid rgba(70, 150, 255, 0.75);
+            border-bottom: 45px solid transparent;
+            right: -60px;
+            top: 45px;
+            filter: drop-shadow(0 5px 15px rgba(100, 200, 255, 0.6));
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .crown {
+            font-size: 140px;
+            animation: crownGlow 2s ease-in-out infinite, crownFloat 3s ease-in-out infinite;
+            display: inline-block;
+            filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.9))
+                    drop-shadow(0 0 8px rgba(255, 215, 0, 0.7))
+                    drop-shadow(0 0 12px rgba(255, 165, 0, 0.5));
+            margin-bottom: 30px;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        @keyframes crownFloat {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes crownGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.9))
+                        drop-shadow(0 0 8px rgba(255, 215, 0, 0.7))
+                        drop-shadow(0 0 12px rgba(255, 165, 0, 0.5));
+                text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+            }
+            50% {
+                filter: drop-shadow(0 0 5px rgba(255, 215, 0, 1))
+                        drop-shadow(0 0 12px rgba(255, 215, 0, 0.8))
+                        drop-shadow(0 0 18px rgba(255, 165, 0, 0.6));
+                text-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .logo-section h1 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-section p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .button-container {
+            margin: 40px 0;
+        }
+
+        .redirect-button {
+            display: inline-block;
+            padding: 18px 55px;
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            background: rgba(26, 26, 26, 0.95);
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .redirect-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .redirect-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 215, 0, 0.2),
+                        0 0 30px rgba(255, 215, 0, 0.15),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 215, 0, 0.6);
+        }
+
+        .redirect-button:hover::before {
+            left: 100%;
+        }
+
+        .redirect-button:active {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.15),
+                        inset 0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 215, 0, 0.8);
+        }
+
+        .info-section {
+            margin-top: 60px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .info-section p {
+            margin-bottom: 10px;
+        }
+
+        .spinner {
+            display: none;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .logo-section h1 {
+                font-size: 32px;
+            }
+
+            .redirect-button {
+                padding: 18px 45px;
+                font-size: 18px;
+            }
+
+            .info-section {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-section">
+            <div class="crown">👑</div>
+            <h1>VIP SHOP</h1>
+            <p>Willkommen zum neuen VIP Shop!</p>
+        </div>
+
+        <div class="button-container">
+            <button class="redirect-button" onclick="redirectToNewShop()">
+                ZUM SHOP
+            </button>
+            <div class="spinner" id="spinner"></div>
+        </div>
+
+        <div class="info-section">
+            <p>✨ Wir haben unsere Webseite komplett erneuert!</p>
+            <p>Klick auf den Button um zum neuen Shop zu gelangen.</p>
+        </div>
+    </div>
+
+    <script>
+        function redirectToNewShop() {
+            const button = document.querySelector('.redirect-button');
+            const spinner = document.getElementById('spinner');
+            
+            // Button deaktivieren
+            button.disabled = true;
+            button.style.opacity = '0.7';
+            button.style.cursor = 'not-allowed';
+            
+            // Spinner anzeigen
+            spinner.classList.add('active');
+            
+            // Nach 500ms weiterleiten
+            setTimeout(() => {
+                window.location.href = 'https://vipshop.cloud';
+            }, 500);
+        }
+
+        // Optional: Auto-redirect nach 5 Sekunden
+        // setTimeout(() => {
+        //     window.location.href = 'https://vipshop.cloud';
+        // }, 5000);
+    </script>
+</body>
+</html>
