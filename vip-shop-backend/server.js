@@ -6,11 +6,17 @@ import dotenv from 'dotenv';
 import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
 import { adminAuthMiddleware, generateAdminToken } from './admin-auth-middleware.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Get directory path for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ==================== ENVIRONMENT VARIABLES ====================
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -36,6 +42,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// ==================== SERVE STATIC FILES (Admin Panel) ====================
+app.use(express.static(path.join(__dirname, '../vip-shop-frontend')));
 
 // ==================== SUPABASE INITIALIZATION ====================
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -625,6 +634,57 @@ app.post('/api/admin/finish/:id', adminAuthMiddleware(JWT_SECRET), async (req, r
     console.log(`[Admin] Order ${id} completed with code`);
 
     res.json({ success: true, message: 'Order completed and code sent' });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 8. POST /api/admin/undo/:id - Undo last action (revert to pending)
+app.post('/api/admin/undo/:id', adminAuthMiddleware(JWT_SECRET), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const now = new Date().toISOString();
+
+    const { data: order, error: getError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (getError || !order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Can only undo if order is approved or rejected (not pending or completed)
+    if (order.status === 'pending' || order.status === 'completed') {
+      return res.status(400).json({ 
+        error: 'Cannot undo pending or completed orders',
+        currentStatus: order.status
+      });
+    }
+
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ 
+        status: 'pending', 
+        rejection_reason: null,
+        updated_at: now 
+      })
+      .eq('id', id);
+
+    if (updateError) {
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    console.log(`[Admin] Order ${id} undo - reverted from ${order.status} to pending`);
+
+    res.json({ 
+      success: true, 
+      message: 'Action undone - order reverted to pending',
+      previousStatus: order.status,
+      newStatus: 'pending'
+    });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Internal server error' });

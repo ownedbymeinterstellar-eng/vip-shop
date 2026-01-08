@@ -38,6 +38,17 @@
         <div id="serverStatus" style="margin-bottom: 30px;"></div>
 
 
+        <!-- Special Offer Banner -->
+        <div class="special-offer-banner">
+            <div class="banner-emoji">🎉</div>
+            <div class="banner-content-special">
+                <h2>Danke für 6.500 Mitglieder! 🚀</h2>
+                <p>Wir feiern zusammen mit euch und hauen massive Reduzierungen auf unsere VIP-Gruppen raus!</p>
+                <div class="discount-badge">Limitiert verfügbar!</div>
+            </div>
+            <div class="banner-emoji">💎</div>
+        </div>
+
         <!-- Intro Section -->
         <div class="intro">
             <h2>Level up dein Game</h2>
@@ -48,11 +59,13 @@
         <div class="products">
             <!-- Silver: Silber -->
             <div class="product-card silver">
+                <div class="discount-label">-25%</div>
                 <div class="product-badge badge-silver">Silber</div>
                 <div class="product-info">
                     <h3 class="glow-silver">🔗 Silber</h3>
                     <div class="product-price">
-                        <span class="price-new">20€</span>
+                        <span class="price-old">20€</span>
+                        <span class="price-new">15€</span>
                     </div>
                     <p class="product-description">
                         Perfekt als Einstieg. Direkte Links ohne Umwege.
@@ -63,7 +76,7 @@
                         <li>Regelmäßige Updates</li>
                         <li>Deutsche & Internationale Creator</li>
                     </ul>
-                    <button class="buy-btn" onclick="selectProduct('Silber', 20)">
+                    <button class="buy-btn" onclick="selectProduct('Silber', 15)">
                         Kaufen
                     </button>
                 </div>
@@ -71,12 +84,14 @@
 
             <!-- Gold: Gold (Featured) -->
             <div class="product-card gold">
+                <div class="discount-label gold-discount">-40%</div>
                 <div class="best-value">★★★</div>
                 <div class="product-badge badge-gold">Gold</div>
                 <div class="product-info">
                     <h3 class="glow-gold">✨ Gold</h3>
                     <div class="product-price">
-                        <span class="price-new">50€</span>
+                        <span class="price-old">50€</span>
+                        <span class="price-new">30€</span>
                     </div>
                     <p class="product-description">
                         Das beste Preis-Leistungs-Verhältnis. Unsere beliebteste Option!
@@ -92,7 +107,7 @@
                         <li>Schnelle Aufnahme in die Gruppe</li>
                         <li>Premium 24/7 Support</li>
                     </ul>
-                    <button class="buy-btn" onclick="selectProduct('Gold', 50)">
+                    <button class="buy-btn" onclick="selectProduct('Gold', 30)">
                         Kaufen
                     </button>
                 </div>
@@ -100,12 +115,14 @@
 
             <!-- Platinum: Platinum (mit Krone) -->
             <div class="product-card platinum">
+                <div class="discount-label platinum-discount">-33%</div>
                 <div class="crown-badge">👑</div>
                 <div class="product-badge badge-platinum">Platinum</div>
                 <div class="product-info">
                     <h3 class="glow-platinum">💎 Platinum</h3>
                     <div class="product-price">
-                        <span class="price-new">60€</span>
+                        <span class="price-old">60€</span>
+                        <span class="price-new">40€</span>
                     </div>
                     <p class="product-description">
                         Das ultimative Erlebnis. Alle Premium-Features freigeschaltet.
@@ -125,7 +142,7 @@
                         <li>Premium 24/7 Support</li>
                         <li>Lifetime Updates inklusive</li>
                     </ul>
-                    <button class="buy-btn" onclick="selectProduct('Platinum', 60)">
+                    <button class="buy-btn" onclick="selectProduct('Platinum', 40)">
                         Kaufen
                     </button>
                 </div>
@@ -177,9 +194,9 @@
                         onchange="selectProductFromDropdown()"
                     >
                         <option value="">-- Wähle dein VIP-Level --</option>
-                        <option value="Silber|20">🔗 Silber - 20€</option>
-                        <option value="Gold|50">✨ Gold - 50€</option>
-                        <option value="Platinum|60">💎 Platinum - 60€</option>
+                        <option value="Silber|15">🔗 Silber - 15€ (-25%)</option>
+                        <option value="Gold|30">✨ Gold - 30€ (-40%)</option>
+                        <option value="Platinum|40">💎 Platinum - 40€ (-33%)</option>
                     </select>
                     <input 
                         type="hidden" 
