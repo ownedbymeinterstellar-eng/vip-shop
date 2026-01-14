@@ -62,12 +62,36 @@ let launchConfig = {
 };
 
 // Beim Start: Prüfe ob Launch bereits läuft (24h Timer)
-function initLaunchTimer() {
-  // Launch-Zeit wird nur beim ersten Start gesetzt
-  // Danach bleibt sie gleich, bis der Server neustartet
-  if (!launchConfig.launchTime) {
+async function initLaunchTimer() {
+  try {
+    // Versuche launchTime aus der Datenbank zu laden
+    const { data: config, error } = await supabase
+      .from('config')
+      .select('value')
+      .eq('key', 'launchTime')
+      .single();
+    
+    if (config && config.value) {
+      launchConfig.launchTime = new Date(config.value);
+      console.log(`🚀 LAUNCH LOADED FROM DB: ${launchConfig.launchTime.toISOString()}`);
+    } else {
+      // Erste Aktivierung: Speichere Launch-Zeit in der Datenbank
+      launchConfig.launchTime = new Date();
+      const { error: insertError } = await supabase
+        .from('config')
+        .upsert({ key: 'launchTime', value: launchConfig.launchTime.toISOString() });
+      
+      if (!insertError) {
+        console.log(`🚀 LAUNCH STARTED & SAVED: ${launchConfig.launchTime.toISOString()}`);
+      } else {
+        console.log(`🚀 LAUNCH STARTED (DB Save Failed): ${launchConfig.launchTime.toISOString()}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading launch config from DB:', error);
+    // Fallback
     launchConfig.launchTime = new Date();
-    console.log(`🚀 LAUNCH STARTED: ${launchConfig.launchTime.toISOString()}`);
+    console.log(`🚀 LAUNCH STARTED (Fallback): ${launchConfig.launchTime.toISOString()}`);
   }
 }
 
@@ -85,7 +109,7 @@ function getCurrentPrices() {
 }
 
 // ==================== INITIALIZE LAUNCH TIMER ====================
-initLaunchTimer();
+// Wird später nach Supabase-Init aufgerufen
 
 // ==================== SERVE STATIC FILES (Admin Panel) ====================
 app.use(express.static(path.join(__dirname, '../vip-shop-frontend')));
@@ -776,7 +800,10 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  // Initialize launch timer after server starts
+  await initLaunchTimer();
+  
   console.log(`
 ╔════════════════════════════════════════╗
 ║  🚀 VIP SHOP BACKEND - ONLINE          ║
