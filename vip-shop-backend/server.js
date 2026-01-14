@@ -43,11 +43,90 @@ app.use(cors({
 
 app.use(express.json());
 
+// ==================== LAUNCH CONFIGURATION ====================
+// Speichert die Launch-Zeit und Preise
+let launchConfig = {
+  launchTime: null, // Wird beim Start gesetzt
+  launchPrices: {
+    silber: 15,
+    gold: 30,
+    platinum: 40,
+    ultimate: 80
+  },
+  regularPrices: {
+    silber: 20,
+    gold: 50,
+    platinum: 60,
+    ultimate: 100
+  }
+};
+
+// Beim Start: Prüfe ob Launch bereits läuft (24h Timer)
+function initLaunchTimer() {
+  // Launch-Zeit wird nur beim ersten Start gesetzt
+  // Danach bleibt sie gleich, bis der Server neustartet
+  if (!launchConfig.launchTime) {
+    launchConfig.launchTime = new Date();
+    console.log(`🚀 LAUNCH STARTED: ${launchConfig.launchTime.toISOString()}`);
+  }
+}
+
+// Berechne ob noch im 24h Launch-Fenster
+function isLaunchActive() {
+  if (!launchConfig.launchTime) return true; // Default: Launch aktiv
+  const now = new Date();
+  const launchEnd = new Date(launchConfig.launchTime.getTime() + 24 * 60 * 60 * 1000);
+  return now < launchEnd;
+}
+
+// Gib die aktuellen Preise zurück (Launch oder Regular)
+function getCurrentPrices() {
+  return isLaunchActive() ? launchConfig.launchPrices : launchConfig.regularPrices;
+}
+
+// ==================== INITIALIZE LAUNCH TIMER ====================
+initLaunchTimer();
+
 // ==================== SERVE STATIC FILES (Admin Panel) ====================
 app.use(express.static(path.join(__dirname, '../vip-shop-frontend')));
 
 // ==================== SUPABASE INITIALIZATION ====================
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// ==================== PRICING API ENDPOINTS ====================
+
+// GET: Aktuelle Preise und Launch-Status
+app.get('/api/pricing', (req, res) => {
+  const isActive = isLaunchActive();
+  const prices = getCurrentPrices();
+  const timeRemaining = isActive ? calculateTimeRemaining() : null;
+
+  res.json({
+    isLaunchActive: isActive,
+    launchTime: launchConfig.launchTime,
+    prices: prices,
+    timeRemaining: timeRemaining, // z.B. { hours: 12, minutes: 30, seconds: 45 }
+    launchPrices: launchConfig.launchPrices,
+    regularPrices: launchConfig.regularPrices
+  });
+});
+
+// Berechne verbleibende Zeit bis Launch-Ende
+function calculateTimeRemaining() {
+  if (!isLaunchActive()) return null;
+  
+  const now = new Date();
+  const launchEnd = new Date(launchConfig.launchTime.getTime() + 24 * 60 * 60 * 1000);
+  const diff = launchEnd - now;
+  
+  if (diff <= 0) return null;
+  
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  
+  return { hours, minutes, seconds };
+}
 
 console.log('✓ Supabase Datenbank initialisiert');
 console.log('✓ Resend Email Service konfiguriert');
