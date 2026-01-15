@@ -16,78 +16,20 @@ let launchStartTime = null;
 // Fetch launch config from backend
 async function initializeLaunchConfig() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/pricing`);
-        const data = await response.json();
-        
-        launchStartTime = new Date(data.launchTime);
-        console.log(`🚀 Launch Zeit vom Backend: ${launchStartTime}`);
-        
-        // Update prices immediately
-        if (data.isLaunchActive) {
-            updatePricesFromBackend(data.prices);
-        } else {
-            updatePricesFromBackend(data.regularPrices);
-            hideCountdownTimers();
-        }
+        // Launch deal is over - always show regular prices
+        updatePricesFromBackend(getCurrentRegularPrices());
+        hideCountdownTimers();
     } catch (error) {
         console.error('Fehler beim Laden der Launch-Konfiguration:', error);
-        // Fallback: use local time
-        launchStartTime = new Date();
+        // Fallback: use regular prices
+        updatePricesFromBackend(getCurrentRegularPrices());
+        hideCountdownTimers();
     }
 }
 
 function startCountdownTimers() {
-    function updateCountdowns() {
-        if (!launchStartTime) return;
-        
-        const now = new Date().getTime();
-        const launchEnd = new Date(launchStartTime.getTime() + 24 * 60 * 60 * 1000);
-        const timeLeft = launchEnd - now;
-
-        if (timeLeft < 0) {
-            // Deal expired - hide timers, update prices
-            updateTimerDisplay(0, 0, 0);
-            updatePricesFromBackend(getCurrentRegularPrices());
-            hideCountdownTimers();
-            return;
-        }
-
-        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-        updateTimerDisplay(hours, minutes, seconds);
-    }
-
-    function updateTimerDisplay(hours, minutes, seconds) {
-        const h = String(hours).padStart(2, '0');
-        const m = String(minutes).padStart(2, '0');
-        const s = String(seconds).padStart(2, '0');
-
-        // Update all timer elements
-        const timerIds = [
-            'ultimate-hours', 'ultimate-minutes', 'ultimate-seconds',
-            'silver-hours', 'silver-minutes', 'silver-seconds',
-            'gold-hours', 'gold-minutes', 'gold-seconds',
-            'platinum-hours', 'platinum-minutes', 'platinum-seconds',
-            'ultimate-product-hours', 'ultimate-product-minutes', 'ultimate-product-seconds'
-        ];
-
-        timerIds.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                if (id.includes('hours')) element.textContent = h;
-                else if (id.includes('minutes')) element.textContent = m;
-                else if (id.includes('seconds')) element.textContent = s;
-            }
-        });
-    }
-
-    // Update immediately
-    updateCountdowns();
-
-    // Update every second
-    setInterval(updateCountdowns, 1000);
+    // Launch deal is over - timers are disabled
+    hideCountdownTimers();
 }
 
 // Update Preise aus Backend
@@ -103,17 +45,6 @@ function updatePricesFromBackend(prices) {
     
     // Ultimate
     document.querySelectorAll('.ultimate .price-new').forEach(el => el.textContent = prices.ultimate + '€');
-    
-    // Update Buttons
-    const silverBtn = document.querySelector('.silver .buy-btn');
-    const goldBtn = document.querySelector('.gold .buy-btn');
-    const platinumBtn = document.querySelector('.platinum .buy-btn');
-    const ultimateBtn = document.querySelector('.ultimate .buy-btn');
-    
-    if (silverBtn) silverBtn.onclick = () => selectProduct('Silber', prices.silber);
-    if (goldBtn) goldBtn.onclick = () => selectProduct('Gold', prices.gold);
-    if (platinumBtn) platinumBtn.onclick = () => selectProduct('Platinum', prices.platinum);
-    if (ultimateBtn) ultimateBtn.onclick = () => selectProduct('VIP Ultimate', prices.ultimate);
 }
 
 function hideCountdownTimers() {
